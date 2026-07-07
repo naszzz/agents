@@ -220,8 +220,14 @@ async def on_session_end(ctx: JobContext) -> None:
 async def hotel_receptionist_agent(ctx: JobContext) -> None:
     await ctx.connect()
 
+    # HOTEL_EXPRESSIVE=1 forces it on for sessions whose caller can't set
+    # attributes (sims, console runs).
     caller = await ctx.wait_for_participant()
-    expressive = caller.attributes.get(EXPRESSIVE_ATTRIBUTE) == "true"
+    expressive = (
+        os.getenv("HOTEL_EXPRESSIVE") == "1"
+        or caller.attributes.get(EXPRESSIVE_ATTRIBUTE) == "true"
+    )
+    logger.info("expressive mode: %s", "on" if expressive else "off")
 
     today = resolve_today()
     db = HotelDB.from_bytes(_seed_db_bytes(today), today)
