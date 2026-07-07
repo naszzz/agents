@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import sys
 from dataclasses import dataclass, field
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -11,9 +13,18 @@ from hotel_db import HotelDB, RoomBooking
 from livekit.agents import llm
 
 
+def resolve_today() -> date:
+    """The hotel's local date (it's in San Francisco, the server may not be).
+    Set HOTEL_TODAY=YYYY-MM-DD to pin it for deterministic sim runs."""
+    if pinned := os.environ.get("HOTEL_TODAY"):
+        return date.fromisoformat(pinned)
+    return datetime.now(ZoneInfo("America/Los_Angeles")).date()
+
+
 @dataclass
 class Userdata:
     db: HotelDB
+    today: date
     # Departments already transferred to this call - guards against a duplicate transfer
     # row when the agent re-calls transfer_call after the caller's reaction.
     transferred_to: set[str] = field(default_factory=set)

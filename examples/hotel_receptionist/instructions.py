@@ -5,13 +5,15 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from datetime import date
+
 from hotel_db import MAX_PARTY_SIZE, PRICING, format_usd
-from persona import COMMON_INSTRUCTIONS
+from persona import common_instructions
 
 
-def build_instructions() -> str:
+def build_instructions(today: date) -> str:
     return f"""\
-{COMMON_INSTRUCTIONS}
+{common_instructions(today)}
 
 You're the lead receptionist, holding the whole call and routing each request to the right tool. Help the caller with whatever they bring - if a request fits a tool, run it; if it's general (a policy, a fact, recalling their stay), answer from what you know.
 

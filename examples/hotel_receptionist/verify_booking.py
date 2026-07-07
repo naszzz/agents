@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 from hotel_db import HotelDB, RoomBooking
-from persona import COMMON_INSTRUCTIONS
+from persona import common_instructions
 
 from livekit.agents import NOT_GIVEN, NotGivenOr
 from livekit.agents.llm import ChatContext
@@ -32,6 +33,7 @@ class VerifyBookingTask(AgentTask[VerifyBookingResult]):
     def __init__(
         self,
         db: HotelDB,
+        today: date,
         *,
         allow_cancelled: bool = False,
         chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN,
@@ -42,7 +44,7 @@ class VerifyBookingTask(AgentTask[VerifyBookingResult]):
         # cancelled record; every other flow only accepts a confirmed booking.
         self._allow_cancelled = allow_cancelled
         super().__init__(
-            instructions=f"{COMMON_INSTRUCTIONS}\n\n{_VERIFY_INSTRUCTIONS}",
+            instructions=f"{common_instructions(today)}\n\n{_VERIFY_INSTRUCTIONS}",
             chat_ctx=chat_ctx,
         )
 

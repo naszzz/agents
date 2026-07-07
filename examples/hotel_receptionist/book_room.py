@@ -7,7 +7,6 @@ from context import speech_only
 from get_card import GetCardTask
 from hotel_db import (
     MAX_PARTY_SIZE,
-    TODAY,
     HotelDB,
     RoomBooking,
     RoomExtra,
@@ -15,7 +14,7 @@ from hotel_db import (
     Unavailable,
     speak_usd,
 )
-from persona import COMMON_INSTRUCTIONS, PHONE_READBACK_INSTRUCTIONS
+from persona import PHONE_READBACK_INSTRUCTIONS, common_instructions
 from pydantic import Field
 
 from livekit.agents import NOT_GIVEN, NotGivenOr, beta
@@ -47,8 +46,11 @@ class BookRoomTask(AgentTask[RoomBooking]):
     offered, storing it on the draft so a later hiccup never re-asks it.
     `confirm_booking()` takes the card, writes the booking, and completes with it."""
 
-    def __init__(self, db: HotelDB, *, chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN) -> None:
+    def __init__(
+        self, db: HotelDB, today: date, *, chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN
+    ) -> None:
         self._db = db
+        self._today = today
         self._check_in: date | None = None
         self._check_out: date | None = None
         self._guests: int | None = None
@@ -66,7 +68,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
         self._card_last4: str | None = None
         self._quoted_total: int | None = None
         super().__init__(
-            instructions=f"{COMMON_INSTRUCTIONS}\n\n{_BOOK_ROOM_INSTRUCTIONS}",
+            instructions=f"{common_instructions(today)}\n\n{_BOOK_ROOM_INSTRUCTIONS}",
             chat_ctx=chat_ctx,
         )
 
@@ -123,7 +125,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
             raise ToolError("check-out must be after check-in")
         if (check_out - check_in).days > 30:
             raise ToolError("the max stay is 30 nights")
-        if check_in < TODAY:
+        if check_in < self._today:
             raise ToolError("check-in can't be in the past")
 
         avail = await self._db.list_room_types_available(
@@ -222,7 +224,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
             first_name=True,
             last_name=True,
             chat_ctx=speech_only(self.chat_ctx),
-            extra_instructions=COMMON_INSTRUCTIONS,
+            extra_instructions=common_instructions(self._today),
         )
         self._first_name, self._last_name = r.first_name or "", r.last_name or ""
         return f"name recorded: {self._first_name} {self._last_name} | {self._status()}"
@@ -231,7 +233,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
     async def open_email_dialog(self) -> str:
         """Open the email dialog. It collects the guest's email address (read back and confirmed) from the caller."""
         r = await beta.workflows.GetEmailTask(
-            chat_ctx=speech_only(self.chat_ctx), extra_instructions=COMMON_INSTRUCTIONS
+            chat_ctx=speech_only(self.chat_ctx), extra_instructions=common_instructions(self._today)
         )
         self._email = r.email_address
         return f"email recorded: {self._email} | {self._status()}"
@@ -241,7 +243,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
         """Open the phone dialog. It collects the guest's phone number (read back and confirmed) from the caller."""
         r = await beta.workflows.GetPhoneNumberTask(
             chat_ctx=speech_only(self.chat_ctx),
-            extra_instructions=COMMON_INSTRUCTIONS + PHONE_READBACK_INSTRUCTIONS,
+            extra_instructions=common_instructions(self._today) + PHONE_READBACK_INSTRUCTIONS,
         )
         self._phone = r.phone_number
         return f"phone recorded: {self._phone} | {self._status()}"
@@ -249,7 +251,7 @@ class BookRoomTask(AgentTask[RoomBooking]):
     @function_tool()
     async def open_credit_card_dialog(self) -> str:
         """Open the credit-card dialog. It collects the card number, expiry, security code, and cardholder name from the caller in one focused step."""
-        card = await GetCardTask(chat_ctx=speech_only(self.chat_ctx))
+        card = await GetCardTask(self._today, chat_ctx=speech_only(self.chat_ctx))
         self._card_last4 = card.card_number[-4:]
         return f"card recorded (ending {self._card_last4}) | {self._status()}"
 

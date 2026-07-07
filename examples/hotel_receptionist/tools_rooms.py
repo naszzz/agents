@@ -16,7 +16,6 @@ from hotel_db import (
     DISPUTE_POLICIES,
     MAX_PARTY_SIZE,
     PRICING,
-    TODAY,
     DisputeCategory,
     DisputePolicy,
     NotFound,
@@ -199,7 +198,9 @@ class RoomToolsMixin:
                 "room, ask them to confirm that first; otherwise just ask if there's anything else."
             )
 
-        booking = await BookRoomTask(db=ctx.userdata.db, chat_ctx=speech_only(self.chat_ctx))
+        booking = await BookRoomTask(
+            ctx.userdata.db, ctx.userdata.today, chat_ctx=speech_only(self.chat_ctx)
+        )
         ctx.userdata.last_room_booking = booking
         ctx.userdata.caller_turns_at_last_booking = _count_caller_turns(self.session.history)
         logger.info("[stub] would email confirmation to %s for %s", booking.email, booking.code)
@@ -216,7 +217,7 @@ class RoomToolsMixin:
         (modify, cancel) update or clear the cache themselves."""
         if ctx.userdata.verified_booking is None:
             verify = await VerifyBookingTask(
-                db=ctx.userdata.db, chat_ctx=speech_only(self.chat_ctx)
+                ctx.userdata.db, ctx.userdata.today, chat_ctx=speech_only(self.chat_ctx)
             )
             ctx.userdata.verified_booking = verify.booking
         return ctx.userdata.verified_booking
@@ -229,7 +230,7 @@ class RoomToolsMixin:
             raise ToolError(
                 f"booking {booking.code} is {booking.status} - there's no active booking to update"
             )
-        card = await GetCardTask(chat_ctx=speech_only(self.chat_ctx))
+        card = await GetCardTask(ctx.userdata.today, chat_ctx=speech_only(self.chat_ctx))
         await ctx.userdata.db.update_booking_card(
             booking_code=booking.code, card_last4=card.card_number[-4:]
         )
@@ -245,11 +246,11 @@ class RoomToolsMixin:
         booking = await self._verified_booking(ctx)
         if booking.status != "confirmed":
             raise ToolError("that booking was cancelled - nothing to modify")
-        if booking.check_out < TODAY:
+        if booking.check_out < ctx.userdata.today:
             raise ToolError("that stay already ended - can't modify a past booking")
 
         updated = await ModifyBookingTask(
-            db=ctx.userdata.db, existing=booking, chat_ctx=speech_only(self.chat_ctx)
+            ctx.userdata.db, booking, ctx.userdata.today, chat_ctx=speech_only(self.chat_ctx)
         )
         # Cache the post-modify booking so subsequent tools (lookup, cancel)
         # don't re-verify and don't see the pre-modify state.
@@ -320,9 +321,11 @@ class RoomToolsMixin:
                 f"question from it: {ctx.userdata.last_cancel_message}"
             )
         booking = await self._verified_booking(ctx)
-        if booking.check_in < TODAY:
+        if booking.check_in < ctx.userdata.today:
             raise ToolError("this booking's check-in has already passed; can't cancel a past stay")
-        within = (booking.check_in - TODAY).days * 24 < PRICING.cancellation_window_hours
+        within = (
+            booking.check_in - ctx.userdata.today
+        ).days * 24 < PRICING.cancellation_window_hours
         forfeit = booking.nightly_rate if within else 0
         await ctx.userdata.db.cancel_room_booking(booking.code)
         # Booking is no longer confirmed; the next tool needing a verified
@@ -351,7 +354,10 @@ class RoomToolsMixin:
     async def reinstate_booking(self, ctx: RunContext[Userdata]) -> str:
         """Bring back a room booking the caller previously CANCELLED and now wants reactivated. Verifies the caller first - this is the one flow that verifies against a cancelled booking - then checks the booking's original room is still free for its dates and flips it back to confirmed. If the room's been taken since the cancellation, say so honestly and offer to look at other rooms/dates; never silently rebook a different room and call it reinstated. Not for editing a confirmed booking (start_booking_modification) or making a brand-new one (start_room_booking)."""
         verify = await VerifyBookingTask(
-            db=ctx.userdata.db, allow_cancelled=True, chat_ctx=speech_only(self.chat_ctx)
+            ctx.userdata.db,
+            ctx.userdata.today,
+            allow_cancelled=True,
+            chat_ctx=speech_only(self.chat_ctx),
         )
         booking = verify.booking
         if booking.status == "confirmed":
@@ -359,7 +365,7 @@ class RoomToolsMixin:
                 f"That booking, {_speak_code(booking.code)}, is already active - nothing to "
                 "reinstate. Reassure the caller it's all set."
             )
-        if booking.check_in < TODAY:
+        if booking.check_in < ctx.userdata.today:
             raise ToolError(
                 "that stay's dates have already passed, so it can't be reinstated - offer a new booking"
             )

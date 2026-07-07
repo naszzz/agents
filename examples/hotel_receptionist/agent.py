@@ -1,19 +1,18 @@
 from __future__ import annotations
 
+import functools
 import logging
 import os
 import sys
+from datetime import date
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from benchmark import build_expected, diff_databases
-from common import Userdata
+from common import Userdata, resolve_today
 from dotenv import load_dotenv
 from fake_data.seed import build_seed_bytes
-from hotel_db import (
-    TODAY,
-    HotelDB,
-)
+from hotel_db import HotelDB
 from instructions import build_instructions
 from policies import build_lookup_policy_tool
 from run_artifacts import dump_run_artifacts
@@ -51,8 +50,8 @@ logger = logging.getLogger("hotel-receptionist")
 
 
 class HotelReceptionistAgent(RoomToolsMixin, RestaurantToolsMixin, ServicesToolsMixin, Agent):
-    def __init__(self) -> None:
-        super().__init__(instructions=build_instructions(), tools=[build_lookup_policy_tool()])
+    def __init__(self, *, today: date) -> None:
+        super().__init__(instructions=build_instructions(today), tools=[build_lookup_policy_tool()])
 
     async def on_enter(self) -> None:
         # The caller may have already said what they want before we speak -
@@ -68,7 +67,10 @@ class HotelReceptionistAgent(RoomToolsMixin, RestaurantToolsMixin, ServicesTools
 
 server = AgentServer()
 
-_SEED_DB_BYTES = build_seed_bytes(TODAY)
+
+@functools.cache
+def _seed_db_bytes(today: date) -> bytes:
+    return build_seed_bytes(today)
 
 
 async def on_simulation_end(ctx: SimulationContext) -> None:
@@ -82,7 +84,8 @@ async def on_simulation_end(ctx: SimulationContext) -> None:
         return
 
     session = ctx.job_context.primary_session
-    expected = await build_expected(_SEED_DB_BYTES, expected_state)
+    today = session.userdata.today
+    expected = await build_expected(_seed_db_bytes(today), today, expected_state)
     try:
         diffs = diff_databases(expected.connection, session.userdata.db.connection)
     finally:
@@ -135,7 +138,9 @@ async def on_session_end(ctx: JobContext) -> None:
             logger.info("local expected-state diff skipped: scenario has no expected_state")
         if expected_state:
             logger.info("running local expected-state diff (%d statement(s))", len(expected_state))
-            expected = await build_expected(_SEED_DB_BYTES, expected_state)
+            expected = await build_expected(
+                _seed_db_bytes(userdata.today), userdata.today, expected_state
+            )
             try:
                 db_diffs = diff_databases(expected.connection, userdata.db.connection)
             finally:
@@ -148,7 +153,7 @@ async def on_session_end(ctx: JobContext) -> None:
     # transactional tables (booking, cancellation, modification, dispute,
     # followup, late-arrival note...) counts.
     try:
-        seed_db = HotelDB.from_bytes(_SEED_DB_BYTES)
+        seed_db = HotelDB.from_bytes(_seed_db_bytes(userdata.today), userdata.today)
         try:
             state_changes = diff_databases(seed_db.connection, userdata.db.connection)
         finally:
@@ -210,13 +215,14 @@ async def on_session_end(ctx: JobContext) -> None:
 async def hotel_receptionist_agent(ctx: JobContext) -> None:
     await ctx.connect()
 
-    db = HotelDB.from_bytes(_SEED_DB_BYTES)
+    today = resolve_today()
+    db = HotelDB.from_bytes(_seed_db_bytes(today), today)
 
     ui = UiView(ctx.room, db.connection)
     db.on_change = ui.on_change
     await ui.start()
 
-    userdata = Userdata(db=db)
+    userdata = Userdata(db=db, today=today)
     session = AgentSession[Userdata](
         userdata=userdata,
         vad=inference.VAD(model="silero"),
@@ -230,7 +236,7 @@ async def hotel_receptionist_agent(ctx: JobContext) -> None:
     # This is for the frontend at http://livekit.com/agents/hotel-receptionist
     SuggestedReplies(session, ctx.room, llm=inference.LLM("google/gemma-4-31b-it")).attach()
 
-    await session.start(agent=HotelReceptionistAgent(), room=ctx.room)
+    await session.start(agent=HotelReceptionistAgent(today=today), room=ctx.room)
 
 
 if __name__ == "__main__":

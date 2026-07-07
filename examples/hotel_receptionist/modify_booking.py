@@ -5,7 +5,6 @@ from typing import Annotated
 
 from hotel_db import (
     MAX_PARTY_SIZE,
-    TODAY,
     HotelDB,
     RoomBooking,
     RoomExtra,
@@ -13,7 +12,7 @@ from hotel_db import (
     Unavailable,
     speak_usd,
 )
-from persona import COMMON_INSTRUCTIONS
+from persona import common_instructions
 from pydantic import Field
 
 from livekit.agents import NOT_GIVEN, NotGivenOr
@@ -50,11 +49,13 @@ class ModifyBookingTask(AgentTask[RoomBooking]):
         self,
         db: HotelDB,
         existing: RoomBooking,
+        today: date,
         *,
         chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN,
     ) -> None:
         self._db = db
         self._existing = existing
+        self._today = today
         # Draft state - starts as a copy of the booking; tools mutate it.
         self._check_in: date = existing.check_in
         self._check_out: date = existing.check_out
@@ -83,7 +84,7 @@ class ModifyBookingTask(AgentTask[RoomBooking]):
             "These are the ONLY facts to read back - never invent dates or amounts."
         )
         super().__init__(
-            instructions=f"{COMMON_INSTRUCTIONS}\n\n{_MODIFY_INSTRUCTIONS}{booking_facts}",
+            instructions=f"{common_instructions(today)}\n\n{_MODIFY_INSTRUCTIONS}{booking_facts}",
             chat_ctx=chat_ctx,
         )
 
@@ -133,7 +134,7 @@ class ModifyBookingTask(AgentTask[RoomBooking]):
         # A future check-in can't be in the past, but if the booking is
         # in-house already its existing check_in IS in the past, and the
         # caller should be able to keep it while shifting check_out.
-        if check_in < TODAY and check_in != self._existing.check_in:
+        if check_in < self._today and check_in != self._existing.check_in:
             raise ToolError("check-in can't be in the past")
 
         avail = await self._db.list_room_types_available(

@@ -13,9 +13,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from common import resolve_today  # noqa: E402
 from hotel_db import (  # noqa: E402
     PRICING,
-    TODAY,
     HotelDB,
     compute_invoice,
 )
@@ -289,7 +289,7 @@ def populate(db: HotelDB, today: date) -> None:
 
 
 def build_seed_bytes(today: date) -> bytes:
-    db = HotelDB.empty()
+    db = HotelDB.empty(today)
     try:
         populate(db, today)
         return db.serialize()
@@ -310,4 +310,4 @@ def write_seed_file(db_path: Path, today: date) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DB_PATH
-    write_seed_file(path, TODAY)
+    write_seed_file(path, resolve_today())

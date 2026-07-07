@@ -4,8 +4,8 @@ from datetime import date, time
 from typing import Annotated
 
 from context import speech_only
-from hotel_db import MAX_PARTY_SIZE, TODAY, HotelDB, RestaurantReservation, Unavailable, speak_time
-from persona import COMMON_INSTRUCTIONS, PHONE_READBACK_INSTRUCTIONS
+from hotel_db import MAX_PARTY_SIZE, HotelDB, RestaurantReservation, Unavailable, speak_time
+from persona import PHONE_READBACK_INSTRUCTIONS, common_instructions
 from pydantic import Field
 
 from livekit.agents import NOT_GIVEN, NotGivenOr, beta
@@ -33,8 +33,11 @@ class BookRestaurantTask(AgentTask[RestaurantReservation]):
     the draft so a later hiccup never re-asks it), and `confirm_reservation()` books the
     table."""
 
-    def __init__(self, db: HotelDB, *, chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN) -> None:
+    def __init__(
+        self, db: HotelDB, today: date, *, chat_ctx: NotGivenOr[ChatContext] = NOT_GIVEN
+    ) -> None:
         self._db = db
+        self._today = today
         self._date: date | None = None
         self._party_size: int | None = None
         self._time: time | None = None
@@ -44,7 +47,7 @@ class BookRestaurantTask(AgentTask[RestaurantReservation]):
         self._last_name: str | None = None
         self._phone: str | None = None
         super().__init__(
-            instructions=f"{COMMON_INSTRUCTIONS}\n\n{_BOOK_RESTAURANT_INSTRUCTIONS}",
+            instructions=f"{common_instructions(today)}\n\n{_BOOK_RESTAURANT_INSTRUCTIONS}",
             chat_ctx=chat_ctx,
         )
 
@@ -75,7 +78,7 @@ class BookRestaurantTask(AgentTask[RestaurantReservation]):
             on_date: Reservation date in ISO YYYY-MM-DD format (e.g. "2026-01-20").
             party_size: Number of guests, exactly as the caller stated it - never shrink it to fit; if it's too big to seat, that's handled below.
         """
-        if on_date < TODAY:
+        if on_date < self._today:
             raise ToolError("the date can't be in the past")
         if party_size > MAX_PARTY_SIZE:
             # The largest table seats MAX_PARTY_SIZE; a bigger party (and the
@@ -129,7 +132,7 @@ class BookRestaurantTask(AgentTask[RestaurantReservation]):
             first_name=True,
             last_name=True,
             chat_ctx=speech_only(self.chat_ctx),
-            extra_instructions=COMMON_INSTRUCTIONS,
+            extra_instructions=common_instructions(self._today),
         )
         self._first_name, self._last_name = r.first_name or "", r.last_name or ""
         return f"name recorded: {self._first_name} {self._last_name} | {self._status()}"
@@ -139,7 +142,7 @@ class BookRestaurantTask(AgentTask[RestaurantReservation]):
         """Open the phone dialog. It collects the guest's phone number (read back and confirmed) from the caller."""
         r = await beta.workflows.GetPhoneNumberTask(
             chat_ctx=speech_only(self.chat_ctx),
-            extra_instructions=COMMON_INSTRUCTIONS + PHONE_READBACK_INSTRUCTIONS,
+            extra_instructions=common_instructions(self._today) + PHONE_READBACK_INSTRUCTIONS,
         )
         self._phone = r.phone_number
         return f"phone recorded: {self._phone} | {self._status()}"

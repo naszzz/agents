@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, fields
 from datetime import date, time, timedelta
@@ -56,6 +55,14 @@ def format_usd(cents: int) -> str:
     sign = "-" if cents < 0 else ""
     cents = abs(cents)
     return f"{sign}${cents // 100}.{cents % 100:02d}"
+
+
+def normalize_phone(phone: str) -> str:
+    return "".join(c for c in phone if c.isdigit()) or phone
+
+
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
 
 
 def speak_usd(cents: int) -> str:
@@ -166,10 +173,6 @@ DISPUTE_POLICIES: dict[DisputeCategory, DisputePolicy] = {
     ),
 }
 
-# Set HOTEL_TODAY=YYYY-MM-DD before import for deterministic sim runs.
-TODAY: date = (
-    date.fromisoformat(os.environ["HOTEL_TODAY"]) if os.environ.get("HOTEL_TODAY") else date.today()
-)
 MAX_PARTY_SIZE = 6
 
 RoomType = Literal["king", "queen_2beds", "double_queen", "suite", "penthouse"]
@@ -498,28 +501,33 @@ OnChange = Callable[[], Awaitable[None]]
 
 
 class HotelDB:
-    def __init__(self, conn: apsw.Connection, *, on_change: OnChange | None = None) -> None:
+    def __init__(
+        self, conn: apsw.Connection, today: date, *, on_change: OnChange | None = None
+    ) -> None:
         self._conn: apsw.Connection = conn
+        self.today = today
         self.on_change = on_change
 
     @classmethod
-    def empty(cls, *, on_change: OnChange | None = None) -> HotelDB:
+    def empty(cls, today: date, *, on_change: OnChange | None = None) -> HotelDB:
         conn = apsw.Connection(":memory:")
-        _install_schema(conn)
-        return cls(conn, on_change=on_change)
+        _install_schema(conn, today)
+        return cls(conn, today, on_change=on_change)
 
     @classmethod
-    def from_bytes(cls, seed_bytes: bytes, *, on_change: OnChange | None = None) -> HotelDB:
+    def from_bytes(
+        cls, seed_bytes: bytes, today: date, *, on_change: OnChange | None = None
+    ) -> HotelDB:
         conn = apsw.Connection(":memory:")
         conn.deserialize("main", seed_bytes)
-        _install_schema(conn)
-        return cls(conn, on_change=on_change)
+        _install_schema(conn, today)
+        return cls(conn, today, on_change=on_change)
 
     @classmethod
-    def open_path(cls, db_path: str, *, on_change: OnChange | None = None) -> HotelDB:
+    def open_path(cls, db_path: str, today: date, *, on_change: OnChange | None = None) -> HotelDB:
         conn = apsw.Connection(db_path)
-        _install_schema(conn)
-        return cls(conn, on_change=on_change)
+        _install_schema(conn, today)
+        return cls(conn, today, on_change=on_change)
 
     @property
     def connection(self) -> apsw.Connection:
@@ -533,6 +541,14 @@ class HotelDB:
 
     async def aclose(self) -> None:
         self.close()
+
+    def _require_future(self, d: date) -> None:
+        if d < self.today:
+            raise Unavailable(f"{d.isoformat()} is in the past")
+
+    async def _notify_change(self) -> None:
+        if self.on_change:
+            await self.on_change()
 
     async def list_room_types_available(
         self,
@@ -668,9 +684,9 @@ class HotelDB:
                     "first_name": first_name,
                     "last_name": last_name,
                     # spoken emails are case-free; transcription capitalization is noise
-                    "email": email.strip().lower(),
+                    "email": normalize_email(email),
                     # digits only: a spoken number transcribes with unpredictable punctuation
-                    "phone": "".join(c for c in phone if c.isdigit()),
+                    "phone": normalize_phone(phone),
                     "check_in": check_in.isoformat(),
                     "check_out": check_out.isoformat(),
                     "guests": guests,
@@ -690,8 +706,7 @@ class HotelDB:
                     "total": total,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return RoomBooking(
             id=booking_id,
             code=code,
@@ -786,8 +801,7 @@ class HotelDB:
                 },
                 {"booking_code": booking_code},
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         updated = _row_to_booking(
             conn.execute(_SQL_BOOKING_BY_CODE, {"code": booking_code}).fetchone()
         )
@@ -805,8 +819,7 @@ class HotelDB:
         )
         if changed == 0:
             raise NotFound(f"booking not found: {booking_code}")
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
 
     async def lookup_guest_history(self, *, last_name: str) -> str | None:
         """Return a returning guest's remembered preferences from past stays, or None
@@ -826,8 +839,7 @@ class HotelDB:
         code = shortuuid("DND-")
         with self.connection as conn:
             _insert(conn, "do_not_disturb", {"code": code, "room_id": room_id})
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def add_to_waitlist(
@@ -851,14 +863,13 @@ class HotelDB:
                     "code": code,
                     "first_name": first_name,
                     "last_name": last_name,
-                    "phone": "".join(c for c in phone if c.isdigit()) or phone,
+                    "phone": normalize_phone(phone),
                     "check_in": check_in.isoformat(),
                     "check_out": check_out.isoformat(),
                     "guests": guests,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def reinstate_booking(self, booking_code: str) -> None:
@@ -884,8 +895,7 @@ class HotelDB:
             raise Unavailable("that room is no longer free for those dates")
         with conn:
             _update(conn, "hotel_bookings", {"status": "confirmed"}, {"code": booking_code})
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
 
     async def book_restaurant(
         self,
@@ -915,15 +925,14 @@ class HotelDB:
                 "table_id": table_id,
                 "first_name": first_name,
                 "last_name": last_name,
-                "phone": "".join(c for c in phone if c.isdigit()),
+                "phone": normalize_phone(phone),
                 "party_size": party_size,
                 "date": on_date.isoformat(),
                 "time": at_time.isoformat(),
                 "notes": notes,
             },
         )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return RestaurantReservation(
             id=reservation_id,
             code=code,
@@ -948,8 +957,7 @@ class HotelDB:
         )
         if changed == 0:
             raise NotFound(f"reservation not found: {code}")
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
 
     async def modify_restaurant_reservation(
         self,
@@ -966,8 +974,7 @@ class HotelDB:
         same-table time shift leaves table_location unchanged. Falls back to the
         next free table only if the current one is taken or too small.
         """
-        if on_date < TODAY:
-            raise Unavailable(f"{on_date.isoformat()} is in the past")
+        self._require_future(on_date)
         conn = self.connection
         with conn:
             current = conn.execute(
@@ -1003,8 +1010,7 @@ class HotelDB:
                 },
                 {"code": code, "status": "confirmed"},
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         updated = _row_to_reservation(
             conn.execute(_SQL_RESERVATION_BY_CODE, {"code": code}).fetchone()
         )
@@ -1022,8 +1028,7 @@ class HotelDB:
         )
         if changed == 0:
             raise NotFound(f"booking not found: {booking_code}")
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
 
     async def update_booking_card(self, *, booking_code: str, card_last4: str) -> None:
         conn = self.connection
@@ -1035,8 +1040,7 @@ class HotelDB:
         )
         if changed == 0:
             raise NotFound(f"booking not found: {booking_code}")
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
 
     async def record_followup(
         self,
@@ -1047,7 +1051,6 @@ class HotelDB:
         summary: str,
     ) -> str:
         code = shortuuid("FUP-")
-        digits = "".join(c for c in caller_phone if c.isdigit())
         conn = self.connection
         with conn:
             _insert(
@@ -1057,13 +1060,11 @@ class HotelDB:
                     "code": code,
                     "kind": kind,
                     "caller_name": caller_name,
-                    # "room 402" and "415-555-0173" both normalize to digits
-                    "caller_phone": digits or caller_phone,
+                    "caller_phone": normalize_phone(caller_phone),
                     "summary": summary,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def schedule_wakeup_call(
@@ -1076,8 +1077,7 @@ class HotelDB:
     ) -> str:
         room_id = self._require_room(room)
         conn = self.connection
-        if call_date < TODAY:
-            raise Unavailable(f"{call_date.isoformat()} is in the past")
+        self._require_future(call_date)
         code = shortuuid("WUC-")
         with conn:
             _insert(
@@ -1091,8 +1091,7 @@ class HotelDB:
                     "time": call_time.isoformat(),
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def book_tour(
@@ -1107,8 +1106,7 @@ class HotelDB:
         tour = TOURS.get(tour_id)
         if tour is None:
             raise NotFound(f"no such tour: {tour_id} - options: {', '.join(TOURS)}")
-        if on_date < TODAY:
-            raise Unavailable(f"{on_date.isoformat()} is in the past")
+        self._require_future(on_date)
         if party_size > tour.max_party:
             raise Unavailable(f"{tour.name} takes at most {tour.max_party} guests")
         total = tour.flat_price or (tour.price_per_person or 0) * party_size
@@ -1121,14 +1119,13 @@ class HotelDB:
                     "code": code,
                     "tour_id": tour_id,
                     "guest_name": guest_name,
-                    "guest_phone": "".join(c for c in guest_phone if c.isdigit()),
+                    "guest_phone": normalize_phone(guest_phone),
                     "date": on_date.isoformat(),
                     "party_size": party_size,
                     "total": total,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code, tour, total
 
     async def book_spa_appointment(
@@ -1146,8 +1143,7 @@ class HotelDB:
             raise NotFound(
                 f"no such spa service: {service_id} - options: {', '.join(SPA_SERVICES)}"
             )
-        if on_date < TODAY:
-            raise Unavailable(f"{on_date.isoformat()} is in the past")
+        self._require_future(on_date)
         if party_size > service.max_party:
             raise Unavailable(f"{service.name} takes at most {service.max_party} guests")
         total = service.price * party_size
@@ -1160,15 +1156,14 @@ class HotelDB:
                     "code": code,
                     "service_id": service_id,
                     "guest_name": guest_name,
-                    "guest_phone": "".join(c for c in guest_phone if c.isdigit()),
+                    "guest_phone": normalize_phone(guest_phone),
                     "date": on_date.isoformat(),
                     "time": at_time.isoformat(),
                     "party_size": party_size,
                     "total": total,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code, service, total
 
     async def book_business_center(
@@ -1186,8 +1181,7 @@ class HotelDB:
             raise NotFound(
                 f"no such service: {service_id} - options: {', '.join(BUSINESS_CENTER_SERVICES)}"
             )
-        if on_date < TODAY:
-            raise Unavailable(f"{on_date.isoformat()} is in the past")
+        self._require_future(on_date)
         if duration_hours > service.max_hours:
             raise Unavailable(f"{service.name} is booked for at most {service.max_hours} hours")
         total = service.flat_price or (service.price_per_hour or 0) * duration_hours
@@ -1200,15 +1194,14 @@ class HotelDB:
                     "code": code,
                     "service_id": service_id,
                     "guest_name": guest_name,
-                    "guest_phone": "".join(c for c in guest_phone if c.isdigit()),
+                    "guest_phone": normalize_phone(guest_phone),
                     "date": on_date.isoformat(),
                     "time": at_time.isoformat(),
                     "duration_hours": duration_hours,
                     "total": total,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code, service, total
 
     async def order_flowers(
@@ -1227,8 +1220,7 @@ class HotelDB:
                 f"no such arrangement: {arrangement_id} - options: "
                 f"{', '.join(FLORIST_ARRANGEMENTS)}"
             )
-        if on_date < TODAY:
-            raise Unavailable(f"{on_date.isoformat()} is in the past")
+        self._require_future(on_date)
         total = arrangement.price
         code = shortuuid("FLR-")
         with self.connection as conn:
@@ -1239,15 +1231,14 @@ class HotelDB:
                     "code": code,
                     "arrangement_id": arrangement_id,
                     "guest_name": guest_name,
-                    "guest_phone": "".join(c for c in guest_phone if c.isdigit()),
+                    "guest_phone": normalize_phone(guest_phone),
                     "deliver_to": deliver_to,
                     "date": on_date.isoformat(),
                     "message": card_message,
                     "total": total,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code, arrangement, total
 
     async def send_email(self, *, recipient: str, kind: str) -> str:
@@ -1265,12 +1256,11 @@ class HotelDB:
                 "emails_sent",
                 {
                     "code": code,
-                    "recipient": recipient.strip().lower(),
+                    "recipient": normalize_email(recipient),
                     "kind": kind,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def transfer_call(self, *, destination: str, summary: str) -> str:
@@ -1291,8 +1281,7 @@ class HotelDB:
                     "summary": summary,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def request_flight_reconfirmation(
@@ -1324,8 +1313,7 @@ class HotelDB:
                     "seat_check": int(seat_check),
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def book_airport_car(
@@ -1337,8 +1325,7 @@ class HotelDB:
         passengers: int,
     ) -> str:
         room_id = self._require_room(room)
-        if pickup_date < TODAY:
-            raise Unavailable(f"{pickup_date.isoformat()} is in the past")
+        self._require_future(pickup_date)
         code = shortuuid("CAR-")
         with self.connection as conn:
             _insert(
@@ -1352,8 +1339,7 @@ class HotelDB:
                     "passengers": passengers,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def dispatch_emergency(self, *, room: str, kind: str, situation: str) -> str:
@@ -1371,8 +1357,7 @@ class HotelDB:
                 "emergency_dispatches",
                 {"code": code, "room_id": room_id, "kind": kind, "situation": situation},
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def room_conflict(self, *, booking_code: str) -> tuple[date, date] | None:
@@ -1402,7 +1387,7 @@ class HotelDB:
         original = conn.execute(
             "SELECT smoking, nightly_rate FROM hotel_rooms WHERE id = :id", {"id": room_id}
         ).fetchone()
-        start = max(date.fromisoformat(check_in), TODAY)
+        start = max(date.fromisoformat(check_in), self.today)
 
         candidate = conn.execute(
             _SQL_FREE_BETTER_ROOM,
@@ -1423,8 +1408,7 @@ class HotelDB:
                 # the rate on the booking doesn't change - a forced move is never
                 # the guest's cost, so an upgrade rides at the original total
                 _update(conn, "hotel_bookings", {"room_id": new_room}, {"code": booking_code})
-            if self.on_change:
-                await self.on_change()
+            await self._notify_change()
             return ConflictResolution(
                 moved_to=new_room,
                 moved_to_type=new_type,
@@ -1444,8 +1428,7 @@ class HotelDB:
                     "return_date": return_date.isoformat(),
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return ConflictResolution(walk_partner=WALK_PARTNER_HOTEL, walk_return_date=return_date)
 
     def _require_room(self, room: str) -> str:
@@ -1478,7 +1461,7 @@ class HotelDB:
                 " WHERE status = 'confirmed'"
                 " AND LOWER(first_name || ' ' || last_name) = LOWER(TRIM(:name))"
                 " AND check_in <= :today AND check_out > :today",
-                {"name": recipient, "today": TODAY.isoformat()},
+                {"name": recipient, "today": self.today.isoformat()},
             ).fetchone()
             _insert(
                 conn,
@@ -1489,13 +1472,12 @@ class HotelDB:
                     # stored name doesn't depend on how the caller's was heard
                     "recipient": in_house[0] if in_house else recipient,
                     "caller_name": caller_name,
-                    "caller_phone": "".join(c for c in caller_phone if c.isdigit()),
+                    "caller_phone": normalize_phone(caller_phone),
                     "message": message,
                     "status": "delivered" if in_house else "undeliverable",
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def peek_stay_total(
@@ -1554,15 +1536,14 @@ class HotelDB:
                     "contact_name": contact_name,
                     # digits only: a spoken callback number transcribes with
                     # unpredictable punctuation, and nothing dials it back out
-                    "contact_phone": "".join(c for c in contact_phone if c.isdigit()),
+                    "contact_phone": normalize_phone(contact_phone),
                     "party_size": party_size,
                     "share_type": share_type,
                     "check_in": check_in.isoformat(),
                     "nights": nights,
                 },
             )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return code
 
     async def file_dispute(
@@ -1598,16 +1579,15 @@ class HotelDB:
                     "UPDATE hotel_invoices SET total = total - :refund WHERE booking_code = :code",
                     {"refund": refund_amount, "code": booking_code},
                 )
-        if self.on_change:
-            await self.on_change()
+        await self._notify_change()
         return case_number
 
 
-def _install_schema(conn: apsw.Connection) -> None:
-    # Views DROP+CREATE so they pick up the current TODAY each time.
+def _install_schema(conn: apsw.Connection, today: date) -> None:
+    # Views DROP+CREATE so they pick up the session's date each time.
     for _ in conn.execute(SCHEMA):
         pass
-    for _ in conn.execute(VIEWS):
+    for _ in conn.execute(_views_sql(today)):
         pass
 
 
@@ -1903,7 +1883,9 @@ CREATE TABLE IF NOT EXISTS lk_descriptions (
 );
 """
 
-VIEWS = f"""
+
+def _views_sql(today: date) -> str:
+    return f"""
 DROP VIEW IF EXISTS hotel_room_status;
 CREATE VIEW hotel_room_status AS
 SELECT r.id AS room_number, r.type, r.room_view, r.max_occupancy, r.nightly_rate,
@@ -1912,7 +1894,7 @@ SELECT r.id AS room_number, r.type, r.room_view, r.max_occupancy, r.nightly_rate
 FROM hotel_rooms r
 LEFT JOIN hotel_bookings b
     ON b.room_id = r.id AND b.status = 'confirmed'
-   AND b.check_in <= '{TODAY.isoformat()}' AND b.check_out > '{TODAY.isoformat()}'
+   AND b.check_in <= '{today.isoformat()}' AND b.check_out > '{today.isoformat()}'
 ORDER BY r.id;
 
 DROP VIEW IF EXISTS restaurant_table_status;
@@ -1928,7 +1910,7 @@ grid AS (
     CROSS JOIN slots s
     LEFT JOIN restaurant_reservations r
         ON r.table_id = rt.id AND r.status = 'confirmed'
-       AND r.date = '{TODAY.isoformat()}' AND r.time = s.t
+       AND r.date = '{today.isoformat()}' AND r.time = s.t
 )
 SELECT label, capacity, location,
        MAX(CASE WHEN t='17:30:00' THEN cell END) AS "5:30 PM",
@@ -1941,6 +1923,7 @@ SELECT label, capacity, location,
        MAX(CASE WHEN t='21:00:00' THEN cell END) AS "9:00 PM"
 FROM grid GROUP BY id ORDER BY label;
 """
+
 
 _BOOKING_COLS = "b.id, b.code, b.room_id, r.type AS room_type, r.smoking, r.nightly_rate, b.first_name, b.last_name, b.email, b.phone, b.check_in, b.check_out, b.guests, b.extras, b.total, b.card_last4, b.status, b.late_arrival_note"
 # Names that _row_to_booking maps the SELECT columns onto - derived from the

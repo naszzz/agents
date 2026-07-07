@@ -13,7 +13,6 @@ from common import Userdata, _speak_code
 from context import speech_only
 from hotel_db import (
     MAX_PARTY_SIZE,
-    TODAY,
     Unavailable,
     speak_time,
 )
@@ -50,7 +49,7 @@ class RestaurantToolsMixin:
     async def start_restaurant_booking(self, ctx: RunContext[Userdata]) -> str | None:
         """Start the restaurant-reservation flow. Call it the moment the caller wants a table - the flow collects date, party size, time, name, and phone itself. Its return is the FINAL result of the reservation: relay it and move on - nothing further to confirm or call afterwards."""
         reservation = await BookRestaurantTask(
-            db=ctx.userdata.db, chat_ctx=speech_only(self.chat_ctx)
+            ctx.userdata.db, ctx.userdata.today, chat_ctx=speech_only(self.chat_ctx)
         )
         return (
             f"You're set for {speak_time(reservation.time)} on "
@@ -135,7 +134,7 @@ class RestaurantToolsMixin:
             new_time: the new time, in 24-hour HH:MM format (e.g. "18:00").
             new_party_size: new number of guests; omit to keep the current party size.
         """
-        if new_date < TODAY:
+        if new_date < ctx.userdata.today:
             raise ToolError("the new date can't be in the past")
         code = confirmation_code.replace(" ", "").upper()
         reservation = await ctx.userdata.db.find_restaurant_reservation(
