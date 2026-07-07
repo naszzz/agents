@@ -43,10 +43,15 @@ from livekit.agents.evals import (
     task_completion_judge,
     tool_use_judge,
 )
+from livekit.agents.voice import presets
 
 load_dotenv(".env.local")
 
 logger = logging.getLogger("hotel-receptionist")
+
+# Set by the frontend on the caller's participant ("true"/"false") to opt in
+# to expressive TTS delivery for the session.
+EXPRESSIVE_ATTRIBUTE = "expressive"
 
 
 class HotelReceptionistAgent(RoomToolsMixin, RestaurantToolsMixin, ServicesToolsMixin, Agent):
@@ -215,6 +220,9 @@ async def on_session_end(ctx: JobContext) -> None:
 async def hotel_receptionist_agent(ctx: JobContext) -> None:
     await ctx.connect()
 
+    caller = await ctx.wait_for_participant()
+    expressive = caller.attributes.get(EXPRESSIVE_ATTRIBUTE) == "true"
+
     today = resolve_today()
     db = HotelDB.from_bytes(_seed_db_bytes(today), today)
 
@@ -229,6 +237,7 @@ async def hotel_receptionist_agent(ctx: JobContext) -> None:
         stt=inference.STT("deepgram/nova-3"),
         llm=inference.LLM("google/gemma-4-31b-it"),
         tts=inference.TTS("inworld/inworld-tts-2", voice=os.getenv("HOTEL_TTS_VOICE") or NOT_GIVEN),
+        expressive=presets.CUSTOMER_SERVICE if expressive else False,
         max_tool_steps=5,
     )
 
