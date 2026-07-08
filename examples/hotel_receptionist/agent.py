@@ -23,7 +23,6 @@ from tools_services import ServicesToolsMixin
 from ui_view import UiView
 
 from livekit.agents import (
-    NOT_GIVEN,
     Agent,
     AgentServer,
     AgentSession,
@@ -45,7 +44,7 @@ from livekit.agents.evals import (
 )
 from livekit.agents.voice import presets
 
-load_dotenv(".env.local")
+load_dotenv()
 
 logger = logging.getLogger("hotel-receptionist")
 
@@ -242,7 +241,10 @@ async def hotel_receptionist_agent(ctx: JobContext) -> None:
         vad=inference.VAD(model="silero"),
         stt=inference.STT("deepgram/nova-3"),
         llm=inference.LLM("google/gemma-4-31b-it"),
-        tts=inference.TTS("inworld/inworld-tts-2", voice=os.getenv("HOTEL_TTS_VOICE") or NOT_GIVEN),
+        tts=inference.TTS(
+            "fishaudio/s2.1-pro",
+            voice=os.getenv("HOTEL_TTS_VOICE") or "104bdee30f5d42b0a06b03cf5b9c0c68",
+        ),
         expressive=presets.CUSTOMER_SERVICE if expressive else False,
         max_tool_steps=5,
     )
