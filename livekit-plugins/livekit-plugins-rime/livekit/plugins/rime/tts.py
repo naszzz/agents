@@ -19,8 +19,10 @@ import base64
 import json
 import os
 import weakref
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, replace
-from urllib.parse import urlencode
+from typing import Literal
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
 import aiohttp
 
@@ -45,6 +47,15 @@ from livekit.agents.voice.io import TimedString
 from .langs import TTSLangs
 from .log import logger
 from .models import ArcanaVoices, DefaultCodaVoice, DefaultMistVoice, TTSModels
+from .websocket_v1 import (
+    RimeV1Audio,
+    RimeV1Connection,
+    RimeV1Flush,
+    RimeV1Input,
+    RimeV1Started,
+    RimeV1StartOptions,
+    RimeV1Text,
+)
 
 # arcana can take as long as 80% of the total duration of the audio it's synthesizing.
 ARCANA_MODEL_TIMEOUT = 60 * 4
@@ -58,6 +69,7 @@ NUM_CHANNELS = 1
 class _TTSOptions:
     model: TTSModels | str
     speaker: str
+    websocket_api: Literal["ws3", "rime.v1"] = "ws3"
     arcana_options: _ArcanaOptions | None = None
     coda_options: _CodaOptions | None = None
     mist_options: _MistOptions | None = None
@@ -82,6 +94,7 @@ class _CodaOptions:
     sample_rate: NotGivenOr[int] = NOT_GIVEN
     speed_alpha: NotGivenOr[float] = NOT_GIVEN
     time_scale_factor: NotGivenOr[float] = NOT_GIVEN
+    text_lookahead_tokens: NotGivenOr[int] = NOT_GIVEN
 
 
 @dataclass
@@ -159,6 +172,18 @@ def _check_time_scale_factor_supported(
         )
 
 
+def _rime_v1_ws_url(base_url: str) -> str:
+    parsed = urlsplit(base_url)
+    scheme = {"http": "ws", "https": "wss", "ws": "ws", "wss": "wss"}.get(parsed.scheme)
+    if scheme is None or not parsed.netloc:
+        raise ValueError("base_url for rime.v1 must be an absolute HTTP or WebSocket URL")
+
+    path = parsed.path.rstrip("/")
+    if not path.endswith("/ws"):
+        path = f"{path}/ws" if path else "/ws"
+    return urlunsplit((scheme, parsed.netloc, path, parsed.query, ""))
+
+
 class TTS(tts.TTS):
     def __init__(
         self,
@@ -177,16 +202,21 @@ class TTS(tts.TTS):
         # Supported by all models; the only speed param that works over WebSocket
         speed_alpha: NotGivenOr[float] = NOT_GIVEN,
         # Mistv2 options
-        sample_rate: int = 22050,
+        sample_rate: NotGivenOr[int] = NOT_GIVEN,
         reduce_latency: NotGivenOr[bool] = NOT_GIVEN,
         pause_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
         phonemize_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
         api_key: NotGivenOr[str] = NOT_GIVEN,
         http_session: aiohttp.ClientSession | None = None,
         use_websocket: bool = False,
+        websocket_api: Literal["ws3", "rime.v1"] = "ws3",
+        text_lookahead_tokens: NotGivenOr[int] = NOT_GIVEN,
         segment: NotGivenOr[str] = NOT_GIVEN,
         tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
     ) -> None:
+        if websocket_api not in ("ws3", "rime.v1"):
+            raise ValueError("websocket_api must be either 'ws3' or 'rime.v1'")
+
         if is_given(base_url):
             # Infer streaming mode from URL prefix; an explicit use_websocket=True still wins.
             use_websocket = use_websocket or base_url.startswith(("ws://", "wss://"))
@@ -194,19 +224,36 @@ class TTS(tts.TTS):
         else:
             resolved_base_url = RIME_WS_BASE_URL if use_websocket else RIME_BASE_URL
 
+        if use_websocket and websocket_api == "rime.v1":
+            if model != "coda":
+                raise ValueError("websocket_api='rime.v1' currently supports only model='coda'")
+            if not is_given(base_url):
+                raise ValueError("base_url is required when websocket_api='rime.v1'")
+            if is_given(speed_alpha):
+                raise ValueError("speed_alpha is not supported by websocket_api='rime.v1'")
+
+        resolved_sample_rate = (
+            sample_rate
+            if is_given(sample_rate)
+            else 24000
+            if use_websocket and websocket_api == "rime.v1" and model == "coda"
+            else 22050
+        )
+
         super().__init__(
             capabilities=tts.TTSCapabilities(
                 streaming=use_websocket,
-                aligned_transcript=use_websocket,
+                aligned_transcript=use_websocket and websocket_api == "ws3",
             ),
-            sample_rate=sample_rate,
+            sample_rate=resolved_sample_rate,
             num_channels=NUM_CHANNELS,
         )
-        self._api_key = api_key if is_given(api_key) else os.environ.get("RIME_API_KEY")
-        if not self._api_key:
+        resolved_api_key = api_key if is_given(api_key) else os.environ.get("RIME_API_KEY")
+        if not resolved_api_key:
             raise ValueError(
                 "Rime API key is required, either as argument or set RIME_API_KEY environmental variable"  # noqa: E501
             )
+        self._api_key: str = resolved_api_key
 
         _check_time_scale_factor_supported(model, time_scale_factor)
 
@@ -221,6 +268,7 @@ class TTS(tts.TTS):
         self._opts = _TTSOptions(
             model=model,
             speaker=speaker,
+            websocket_api=websocket_api,
         )
         if model == "arcana":
             self._opts.arcana_options = _ArcanaOptions(
@@ -229,7 +277,7 @@ class TTS(tts.TTS):
                 top_p=top_p,
                 max_tokens=max_tokens,
                 lang=lang,
-                sample_rate=sample_rate,
+                sample_rate=resolved_sample_rate,
                 speed_alpha=speed_alpha,
                 time_scale_factor=time_scale_factor,
             )
@@ -237,14 +285,15 @@ class TTS(tts.TTS):
             self._opts.coda_options = _CodaOptions(
                 max_tokens=max_tokens,
                 lang=lang,
-                sample_rate=sample_rate,
+                sample_rate=resolved_sample_rate,
                 speed_alpha=speed_alpha,
                 time_scale_factor=time_scale_factor,
+                text_lookahead_tokens=text_lookahead_tokens,
             )
         elif _is_mist_model(model):
             self._opts.mist_options = _MistOptions(
                 lang=lang,
-                sample_rate=sample_rate,
+                sample_rate=resolved_sample_rate,
                 speed_alpha=speed_alpha,
                 reduce_latency=reduce_latency,
                 pause_between_brackets=pause_between_brackets,
@@ -265,6 +314,12 @@ class TTS(tts.TTS):
         self._pool = utils.ConnectionPool[aiohttp.ClientWebSocketResponse](
             connect_cb=self._connect_ws,
             close_cb=self._close_ws,
+            max_session_duration=300,
+            mark_refreshed_on_get=True,
+        )
+        self._v1_pool = utils.ConnectionPool[RimeV1Connection](
+            connect_cb=self._connect_v1,
+            close_cb=self._close_v1,
             max_session_duration=300,
             mark_refreshed_on_get=True,
         )
@@ -318,9 +373,42 @@ class TTS(tts.TTS):
         finally:
             await ws.close()
 
+    async def _connect_v1(self, timeout: float) -> RimeV1Connection:
+        return await RimeV1Connection.connect(
+            session=self._ensure_session(),
+            url=_rime_v1_ws_url(self._base_url),
+            api_key=self._api_key,
+            timeout=timeout,
+        )
+
+    async def _close_v1(self, connection: RimeV1Connection) -> None:
+        await connection.close()
+
+    def _v1_start_options(self) -> RimeV1StartOptions:
+        coda_options = self._opts.coda_options
+        if coda_options is None:
+            raise RuntimeError("Rime v1 requires Coda options")
+        return RimeV1StartOptions(
+            speaker=self._opts.speaker,
+            language=str(coda_options.lang) if is_given(coda_options.lang) else "eng",
+            sample_rate=self.sample_rate,
+            time_scale_factor=(
+                coda_options.time_scale_factor if is_given(coda_options.time_scale_factor) else None
+            ),
+            max_tokens=coda_options.max_tokens if is_given(coda_options.max_tokens) else None,
+            text_lookahead_tokens=(
+                coda_options.text_lookahead_tokens
+                if is_given(coda_options.text_lookahead_tokens)
+                else None
+            ),
+        )
+
     def prewarm(self) -> None:
         if self._use_websocket:
-            self._pool.prewarm()
+            if self._opts.websocket_api == "rime.v1":
+                self._v1_pool.prewarm()
+            else:
+                self._pool.prewarm()
 
     def stream(
         self, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS
@@ -338,6 +426,7 @@ class TTS(tts.TTS):
             await s.aclose()
         self._streams.clear()
         await self._pool.aclose()
+        await self._v1_pool.aclose()
 
     def synthesize(
         self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS
@@ -367,13 +456,22 @@ class TTS(tts.TTS):
         reduce_latency: NotGivenOr[bool] = NOT_GIVEN,
         pause_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
         phonemize_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
+        text_lookahead_tokens: NotGivenOr[int] = NOT_GIVEN,
         base_url: NotGivenOr[str] = NOT_GIVEN,
     ) -> None:
         effective_model = model if is_given(model) else self._opts.model
         _check_time_scale_factor_supported(effective_model, time_scale_factor)
+        if self._use_websocket and self._opts.websocket_api == "rime.v1":
+            if effective_model != "coda":
+                raise ValueError("websocket_api='rime.v1' currently supports only model='coda'")
+            if is_given(speed_alpha):
+                raise ValueError("speed_alpha is not supported by websocket_api='rime.v1'")
 
         # WS URL is bound at pool connect; invalidate if any URL-affecting param changed.
-        prev_ws_url = self._ws_url() if self._use_websocket else None
+        prev_ws_url = (
+            self._ws_url() if self._use_websocket and self._opts.websocket_api == "ws3" else None
+        )
+        prev_base_url = self._base_url
         if is_given(base_url):
             self._base_url = base_url
         if is_given(model):
@@ -415,10 +513,13 @@ class TTS(tts.TTS):
                 self._opts.coda_options.lang = lang
             if is_given(sample_rate):
                 self._opts.coda_options.sample_rate = sample_rate
+                self._sample_rate = sample_rate
             if is_given(speed_alpha):
                 self._opts.coda_options.speed_alpha = speed_alpha
             if is_given(time_scale_factor):
                 self._opts.coda_options.time_scale_factor = time_scale_factor
+            if is_given(text_lookahead_tokens):
+                self._opts.coda_options.text_lookahead_tokens = text_lookahead_tokens
 
         elif _is_mist_model(self._opts.model) and self._opts.mist_options is not None:
             if is_given(lang):
@@ -438,6 +539,12 @@ class TTS(tts.TTS):
 
         if prev_ws_url is not None and self._ws_url() != prev_ws_url:
             self._pool.invalidate()
+        if (
+            self._use_websocket
+            and self._opts.websocket_api == "rime.v1"
+            and self._base_url != prev_base_url
+        ):
+            self._v1_pool.invalidate()
 
 
 class ChunkedStream(tts.ChunkedStream):
@@ -519,6 +626,63 @@ class SynthesizeStream(tts.SynthesizeStream):
         self._tts: TTS = tts
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
+        if self._tts._opts.websocket_api == "rime.v1":
+            await self._run_v1(output_emitter)
+            return
+        await self._run_ws3(output_emitter)
+
+    async def _run_v1(self, output_emitter: tts.AudioEmitter) -> None:
+        async def _inputs() -> AsyncIterator[RimeV1Input]:
+            async for data in self._input_ch:
+                if isinstance(data, self._FlushSentinel):
+                    yield RimeV1Flush()
+                elif data:
+                    self._mark_started()
+                    yield RimeV1Text(data)
+
+        connection: RimeV1Connection | None = None
+        try:
+            connection = await self._tts._v1_pool.get(timeout=self._conn_options.timeout)
+            self._acquire_time = self._tts._v1_pool.last_acquire_time
+            self._connection_reused = self._tts._v1_pool.last_connection_reused
+
+            initialized = False
+            async for event in connection.synthesize(
+                start=self._tts._v1_start_options(), inputs=_inputs()
+            ):
+                if isinstance(event, RimeV1Started):
+                    output_emitter.initialize(
+                        request_id=event.request_id or event.context_id,
+                        sample_rate=self._tts.sample_rate,
+                        num_channels=NUM_CHANNELS,
+                        mime_type="audio/pcm",
+                        stream=True,
+                    )
+                    output_emitter.start_segment(segment_id=event.context_id)
+                    output_emitter._note_provider_request_id(event.request_id)
+                    initialized = True
+                elif isinstance(event, RimeV1Audio):
+                    if not initialized:
+                        raise APIConnectionError(
+                            "Rime v1 returned audio before stream initialization",
+                            retryable=False,
+                        )
+                    output_emitter.push(event.data)
+        except BaseException:
+            if connection is not None:
+                if connection.reusable:
+                    self._tts._v1_pool.put(connection)
+                else:
+                    self._tts._v1_pool.remove(connection)
+            raise
+        else:
+            if connection is not None:
+                if connection.reusable:
+                    self._tts._v1_pool.put(connection)
+                else:
+                    self._tts._v1_pool.remove(connection)
+
+    async def _run_ws3(self, output_emitter: tts.AudioEmitter) -> None:
         request_id = utils.shortuuid()
         context_id = utils.shortuuid()
         output_emitter.initialize(
