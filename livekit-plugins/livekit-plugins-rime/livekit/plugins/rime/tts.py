@@ -16,10 +16,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import json
 import os
 import weakref
+from collections.abc import AsyncIterable
 from dataclasses import dataclass, replace
+from typing import Literal, TypeVar
 from urllib.parse import urlencode
 
 import aiohttp
@@ -42,6 +45,7 @@ from livekit.agents.types import (
 from livekit.agents.utils import is_given
 from livekit.agents.voice.io import TimedString
 
+from . import _websocket_v1
 from .langs import TTSLangs
 from .log import logger
 from .models import DefaultCodaVoice, DefaultMistVoice, TTSModels
@@ -51,6 +55,7 @@ MIST_MODEL_TIMEOUT = 30
 RIME_BASE_URL = "https://users.rime.ai/v1/rime-tts"
 RIME_WS_BASE_URL = "wss://users-ws.rime.ai"
 NUM_CHANNELS = 1
+_OptionT = TypeVar("_OptionT")
 
 
 @dataclass
@@ -143,7 +148,7 @@ def _check_time_scale_factor_supported(
         )
 
 
-class TTS(tts.TTS):
+class TTS(tts.TTS[Literal["rime_tts_event"]]):
     def __init__(
         self,
         *,
@@ -156,7 +161,7 @@ class TTS(tts.TTS):
         temperature: NotGivenOr[float] = NOT_GIVEN,
         top_p: NotGivenOr[float] = NOT_GIVEN,
         max_tokens: NotGivenOr[int] = NOT_GIVEN,
-        # Shared by mistv3 and coda (HTTP only; use speed_alpha on WebSocket)
+        # Shared by mistv3 and coda (HTTP and v1 WebSocket)
         time_scale_factor: NotGivenOr[float] = NOT_GIVEN,
         # Supported by all models; the only speed param that works over WebSocket
         speed_alpha: NotGivenOr[float] = NOT_GIVEN,
@@ -168,9 +173,17 @@ class TTS(tts.TTS):
         api_key: NotGivenOr[str] = NOT_GIVEN,
         http_session: aiohttp.ClientSession | None = None,
         use_websocket: bool = False,
+        websocket_protocol: Literal["ws3", "v1"] = "ws3",
         segment: NotGivenOr[str] = NOT_GIVEN,
         tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
     ) -> None:
+        if websocket_protocol not in ("ws3", "v1"):
+            raise ValueError('websocket_protocol must be either "ws3" or "v1"')
+        if websocket_protocol == "v1" and not use_websocket:
+            raise ValueError('websocket_protocol="v1" requires use_websocket=True')
+        if websocket_protocol == "v1" and not is_given(base_url):
+            raise ValueError('websocket_protocol="v1" requires an explicit model base_url')
+
         if is_given(base_url):
             # Infer streaming mode from URL prefix; an explicit use_websocket=True still wins.
             use_websocket = use_websocket or base_url.startswith(("ws://", "wss://"))
@@ -181,16 +194,17 @@ class TTS(tts.TTS):
         super().__init__(
             capabilities=tts.TTSCapabilities(
                 streaming=use_websocket,
-                aligned_transcript=use_websocket,
+                aligned_transcript=use_websocket and websocket_protocol == "ws3",
             ),
             sample_rate=sample_rate,
             num_channels=NUM_CHANNELS,
         )
-        self._api_key = api_key if is_given(api_key) else os.environ.get("RIME_API_KEY")
-        if not self._api_key:
+        resolved_api_key = api_key if is_given(api_key) else os.environ.get("RIME_API_KEY")
+        if not resolved_api_key:
             raise ValueError(
                 "Rime API key is required, either as argument or set RIME_API_KEY environmental variable"  # noqa: E501
             )
+        self._api_key = resolved_api_key
 
         _warn_if_arcana(model)
         if is_given(model):
@@ -201,6 +215,11 @@ class TTS(tts.TTS):
             model_is_explicit = False
 
         _check_time_scale_factor_supported(resolved_model, time_scale_factor)
+        if websocket_protocol == "v1":
+            if resolved_model != "coda":
+                raise ValueError('websocket_protocol="v1" only supports model="coda"')
+            if is_given(speed_alpha):
+                raise ValueError("speed_alpha is not supported by the Rime v1 WebSocket protocol")
 
         if not is_given(speaker):
             if not model_is_explicit:
@@ -240,6 +259,7 @@ class TTS(tts.TTS):
         self._session = http_session
         self._base_url = resolved_base_url
         self._use_websocket = use_websocket
+        self._websocket_protocol = websocket_protocol
         self._segment = segment if is_given(segment) else "bySentence"
 
         self._total_timeout = _timeout_for_model(resolved_model)
@@ -248,12 +268,77 @@ class TTS(tts.TTS):
         self._sentence_tokenizer = (
             tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
         )
-        self._pool = utils.ConnectionPool[aiohttp.ClientWebSocketResponse](
-            connect_cb=self._connect_ws,
+        self._retired_pools: set[utils.ConnectionPool[aiohttp.ClientWebSocketResponse]] = set()
+        self._pool_stream_counts: dict[
+            utils.ConnectionPool[aiohttp.ClientWebSocketResponse], int
+        ] = {}
+        self._pool_close_tasks: set[asyncio.Task[None]] = set()
+        self._pool = self._new_pool()
+
+    def _new_pool(self) -> utils.ConnectionPool[aiohttp.ClientWebSocketResponse]:
+        if self._websocket_protocol == "v1":
+            base_url = self._base_url
+
+            async def _connect(timeout: float) -> aiohttp.ClientWebSocketResponse:
+                return await _websocket_v1.connect(
+                    self._ensure_session(),
+                    base_url=base_url,
+                    api_key=self._api_key,
+                    timeout=timeout,
+                )
+
+            connect_cb = _connect
+        else:
+            connect_cb = self._connect_ws
+
+        return utils.ConnectionPool[aiohttp.ClientWebSocketResponse](
+            connect_cb=connect_cb,
             close_cb=self._close_ws,
             max_session_duration=300,
             mark_refreshed_on_get=True,
         )
+
+    def _retain_pool(self, pool: utils.ConnectionPool[aiohttp.ClientWebSocketResponse]) -> None:
+        self._pool_stream_counts[pool] = self._pool_stream_counts.get(pool, 0) + 1
+
+    def _release_pool(self, pool: utils.ConnectionPool[aiohttp.ClientWebSocketResponse]) -> None:
+        stream_count = self._pool_stream_counts.get(pool, 0)
+        if stream_count > 1:
+            self._pool_stream_counts[pool] = stream_count - 1
+            return
+
+        self._pool_stream_counts.pop(pool, None)
+        self._schedule_retired_pool_close(pool)
+
+    def _retire_pool(self, pool: utils.ConnectionPool[aiohttp.ClientWebSocketResponse]) -> None:
+        self._retired_pools.add(pool)
+        if self._pool_stream_counts.get(pool, 0) == 0:
+            self._schedule_retired_pool_close(pool)
+
+    def _schedule_retired_pool_close(
+        self, pool: utils.ConnectionPool[aiohttp.ClientWebSocketResponse]
+    ) -> None:
+        if pool not in self._retired_pools:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+
+        self._retired_pools.remove(pool)
+        task = loop.create_task(pool.aclose())
+        self._pool_close_tasks.add(task)
+        task.add_done_callback(self._on_retired_pool_closed)
+
+    def _on_retired_pool_closed(self, task: asyncio.Task[None]) -> None:
+        self._pool_close_tasks.discard(task)
+        if task.cancelled():
+            return
+        if error := task.exception():
+            logger.warning(
+                "failed to close a retired Rime WebSocket pool",
+                extra={"exception_type": type(error).__name__},
+            )
 
     @property
     def model(self) -> str:
@@ -270,6 +355,8 @@ class TTS(tts.TTS):
         return self._session
 
     def _ws_url(self) -> str:
+        if self._websocket_protocol == "v1":
+            return _websocket_v1.websocket_url(self._base_url)
         params: dict[str, object] = {
             "speaker": self._opts.speaker,
             "modelId": self._opts.model,
@@ -293,6 +380,9 @@ class TTS(tts.TTS):
         )
 
     async def _close_ws(self, ws: aiohttp.ClientWebSocketResponse) -> None:
+        if self._websocket_protocol == "v1":
+            await _websocket_v1.close(ws)
+            return
         try:
             await ws.send_str(json.dumps({"operation": "eos"}))
             try:
@@ -317,6 +407,14 @@ class TTS(tts.TTS):
             )
         s = SynthesizeStream(tts=self, conn_options=conn_options)
         self._streams.add(s)
+        if self._websocket_protocol == "v1":
+            pool = s._pool
+            self._retain_pool(pool)
+
+            def _release_pool(_: asyncio.Task[None]) -> None:
+                self._release_pool(pool)
+
+            s._task.add_done_callback(_release_pool)
         return s
 
     async def aclose(self) -> None:
@@ -324,6 +422,11 @@ class TTS(tts.TTS):
             await s.aclose()
         self._streams.clear()
         await self._pool.aclose()
+        for pool in list(self._retired_pools):
+            await pool.aclose()
+        self._retired_pools.clear()
+        if self._pool_close_tasks:
+            await asyncio.gather(*list(self._pool_close_tasks), return_exceptions=True)
 
     def synthesize(
         self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS
@@ -357,8 +460,13 @@ class TTS(tts.TTS):
         _warn_if_arcana(model)
         effective_model = model if is_given(model) else self._opts.model
         _check_time_scale_factor_supported(effective_model, time_scale_factor)
+        if self._websocket_protocol == "v1":
+            if effective_model != "coda":
+                raise ValueError('websocket_protocol="v1" only supports model="coda"')
+            if is_given(speed_alpha):
+                raise ValueError("speed_alpha is not supported by the Rime v1 WebSocket protocol")
 
-        # WS URL is bound at pool connect; invalidate if any URL-affecting param changed.
+        # The WS URL is bound when its pool connects. Refresh the pool when that URL changes.
         prev_ws_url = self._ws_url() if self._use_websocket else None
         if is_given(base_url):
             self._base_url = base_url
@@ -373,6 +481,8 @@ class TTS(tts.TTS):
 
         if is_given(speaker):
             self._opts.speaker = speaker
+        if is_given(sample_rate):
+            self._sample_rate = sample_rate
 
         if self._opts.model == "coda" and self._opts.coda_options is not None:
             if is_given(repetition_penalty):
@@ -409,7 +519,12 @@ class TTS(tts.TTS):
                 self._opts.mist_options.time_scale_factor = time_scale_factor
 
         if prev_ws_url is not None and self._ws_url() != prev_ws_url:
-            self._pool.invalidate()
+            if self._websocket_protocol == "v1":
+                old_pool = self._pool
+                self._pool = self._new_pool()
+                self._retire_pool(old_pool)
+            else:
+                self._pool.invalidate()
 
 
 class ChunkedStream(tts.ChunkedStream):
@@ -421,7 +536,7 @@ class ChunkedStream(tts.ChunkedStream):
         self._opts = replace(tts._opts)
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
-        payload: dict = {
+        payload: dict[str, object] = {
             "speaker": self._opts.speaker,
             "text": self._input_text,
             "modelId": self._opts.model,
@@ -486,8 +601,103 @@ class SynthesizeStream(tts.SynthesizeStream):
     def __init__(self, *, tts: TTS, conn_options: APIConnectOptions) -> None:
         super().__init__(tts=tts, conn_options=conn_options)
         self._tts: TTS = tts
+        self._opts = copy.deepcopy(tts._opts)
+        self._pool = tts._pool
+        self._end_flush_sentinel: object | None = None
+
+    def _enqueue_flush_sentinel(self) -> tts.SynthesizeStream._FlushSentinel:
+        sentinel = self._FlushSentinel()
+        self._input_ch.send_nowait(sentinel)
+        self._input_buffer.append(sentinel)
+        return sentinel
+
+    def flush(self) -> None:
+        if self._tts._websocket_protocol != "v1":
+            super().flush()
+            return
+        if self._input_ch.closed:
+            return
+
+        # A Rime v1 flush speaks pending text but keeps the same synthesis context open.
+        # Keep _mtc_text intact so later text remains part of this one LiveKit segment.
+        self._enqueue_flush_sentinel()
+
+    def end_input(self) -> None:
+        if self._input_ch.closed:
+            return
+        if self._tts._websocket_protocol != "v1":
+            super().end_input()
+            return
+
+        if self._mtc_text:
+            self._mtc_pending_texts.append(self._mtc_text)
+            self._mtc_text = ""
+
+        self._end_flush_sentinel = self._enqueue_flush_sentinel()
+        self._input_ch.close()
+        self._input_ended = True
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
+        if self._tts._websocket_protocol == "v1":
+            await self._run_v1(output_emitter)
+            return
+        await self._run_ws3(output_emitter)
+
+    async def _run_v1(self, output_emitter: tts.AudioEmitter) -> None:
+        coda = self._opts.coda_options
+        if coda is None:
+            raise APIError("Rime v1 requires Coda options", retryable=False)
+        if not is_given(coda.lang) or not is_given(coda.sample_rate):
+            raise APIError("Rime v1 requires language and sample_rate", retryable=False)
+
+        def _optional(value: NotGivenOr[_OptionT]) -> _OptionT | None:
+            return value if is_given(value) else None
+
+        options = _websocket_v1.SynthesisOptions(
+            speaker=self._opts.speaker,
+            language=str(coda.lang),
+            sampling_rate=coda.sample_rate,
+            repetition_penalty=_optional(coda.repetition_penalty),
+            temperature=_optional(coda.temperature),
+            top_p=_optional(coda.top_p),
+            max_tokens=_optional(coda.max_tokens),
+            time_scale_factor=_optional(coda.time_scale_factor),
+        )
+
+        async def _input_events() -> AsyncIterable[str | _websocket_v1.Flush]:
+            async for event in self._input_ch:
+                if isinstance(event, self._FlushSentinel):
+                    if event is not self._end_flush_sentinel:
+                        yield _websocket_v1.Flush()
+                else:
+                    yield event
+
+        ws = await self._pool.get(timeout=self._conn_options.timeout)
+        self._acquire_time = self._pool.last_acquire_time
+        self._connection_reused = self._pool.last_connection_reused
+        reusable = False
+        try:
+            result = await _websocket_v1.run_context(
+                ws,
+                context_id=utils.shortuuid(),
+                options=options,
+                input_events=_input_events(),
+                output_emitter=output_emitter,
+                timeout=self._conn_options.timeout,
+                mark_started=self._mark_started,
+            )
+            reusable = result.reusable
+        except _websocket_v1._ContextCancelled as e:
+            reusable = e.reusable
+            raise
+        finally:
+            if reusable:
+                self._pool.put(ws)
+            else:
+                self._pool.remove(ws)
+                await self._tts._close_ws(ws)
+
+    async def _run_ws3(self, output_emitter: tts.AudioEmitter) -> None:
         request_id = utils.shortuuid()
         context_id = utils.shortuuid()
         output_emitter.initialize(
