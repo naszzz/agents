@@ -164,9 +164,9 @@ class _RimeV1Server:
 
 
 def _v1_tts(server: _RimeV1Server, **kwargs: Any):
-    from livekit.plugins.rime import CodaTTS
+    from livekit.plugins.rime import TTS
 
-    return CodaTTS(
+    return TTS(
         api_key="test-key",
         speaker="astra",
         websocket_url=server.websocket_url,
@@ -250,36 +250,24 @@ def test_coda_request_controls() -> None:
     assert updated_params["timeScaleFactor"] == ["1.1"]
 
 
-def test_v1_url_and_capabilities() -> None:
+def test_websocket_url_selects_coda_v1() -> None:
     from livekit.plugins.rime import TTS
 
+    websocket_url = "wss://api.rimetts.com/coda/v1/coda/ws"
     tts = TTS(
         api_key="test-key",
-        model="coda",
-        use_websocket=True,
-        websocket_protocol="v1",
-        base_url="https://api.rimetts.com/coda/v1/coda/",
+        websocket_url=websocket_url,
     )
 
-    assert tts._ws_url() == "wss://api.rimetts.com/coda/v1/coda/ws"
-    assert tts.capabilities.streaming is True
-    assert tts.capabilities.aligned_transcript is False
-
-
-def test_coda_tts_accepts_the_final_websocket_url() -> None:
-    from livekit.plugins.rime import CodaTTS
-
-    websocket_url = "wss://api.rimetts.com/coda/v1/coda/ws"
-    tts = CodaTTS(api_key="test-key", websocket_url=websocket_url)
-
-    assert tts.websocket_url == websocket_url
     assert tts._ws_url() == websocket_url
+    assert tts._coda_websocket_url == websocket_url
+    assert tts._opts.speaker == "astra"
     assert tts.model == "coda"
     assert tts.capabilities.streaming is True
     assert tts.capabilities.aligned_transcript is False
-    assert "websocket_protocol" not in inspect.signature(CodaTTS).parameters
-    assert "use_websocket" not in inspect.signature(CodaTTS).parameters
-    assert "model" not in inspect.signature(CodaTTS).parameters
+    assert not hasattr(tts, "_websocket_protocol")
+    assert "websocket_url" in inspect.signature(TTS).parameters
+    assert "websocket_protocol" not in inspect.signature(TTS).parameters
 
 
 @pytest.mark.parametrize(
@@ -289,36 +277,40 @@ def test_coda_tts_accepts_the_final_websocket_url() -> None:
         "/coda/v1/coda/ws",
     ],
 )
-def test_coda_tts_rejects_non_websocket_urls(websocket_url: str) -> None:
-    from livekit.plugins.rime import CodaTTS
+def test_tts_rejects_non_websocket_urls(websocket_url: str) -> None:
+    from livekit.plugins.rime import TTS
 
     with pytest.raises(ValueError, match="absolute ws or wss URL"):
-        CodaTTS(api_key="test-key", websocket_url=websocket_url)
+        TTS(api_key="test-key", websocket_url=websocket_url)
 
 
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
-        ({"websocket_protocol": "bad"}, "websocket_protocol"),
-        ({"websocket_protocol": "v1"}, "use_websocket=True"),
         (
-            {"websocket_protocol": "v1", "use_websocket": True},
-            "explicit model base_url",
+            {
+                "websocket_url": "wss://example.com/coda/ws",
+                "base_url": "https://example.com/coda",
+            },
+            "cannot be used with base_url",
         ),
         (
             {
-                "websocket_protocol": "v1",
-                "use_websocket": True,
-                "base_url": "https://example.com/coda",
+                "websocket_url": "wss://example.com/coda/ws",
                 "model": "mistv2",
             },
-            'model="coda"',
+            'selects model="coda"',
         ),
         (
             {
-                "websocket_protocol": "v1",
+                "websocket_url": "wss://example.com/coda/ws",
                 "use_websocket": True,
-                "base_url": "https://example.com/coda",
+            },
+            "omit use_websocket",
+        ),
+        (
+            {
+                "websocket_url": "wss://example.com/coda/ws",
                 "speed_alpha": 1.1,
             },
             "speed_alpha",

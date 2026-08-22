@@ -24,16 +24,15 @@ import os
 
 from livekit.plugins import rime
 
-tts = rime.CodaTTS(
+tts = rime.TTS(
     websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
     speaker="astra",
     api_key=os.environ["RIME_API_KEY"],
 )
 ```
 
-Pass the active Coda WebSocket endpoint explicitly. `CodaTTS` always uses Coda, WebSocket
-streaming, and the v1 JSON protocol. The older `TTS` v1 constructor arguments remain available
-for compatibility.
+Pass the active Coda WebSocket endpoint explicitly. The presence of `websocket_url` selects Coda,
+WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`.
 
 The first v1 implementation has these limits:
 

@@ -21,7 +21,7 @@ import json
 from collections.abc import AsyncIterable, Callable
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urlsplit
 
 import aiohttp
 
@@ -68,22 +68,6 @@ class _ContextCancelled(asyncio.CancelledError):
     def __init__(self, *, reusable: bool) -> None:
         super().__init__()
         self.reusable = reusable
-
-
-def websocket_url(base_url: str) -> str:
-    """Convert a model route to its v1 WebSocket endpoint."""
-    parts = urlsplit(base_url)
-    if parts.scheme == "http":
-        scheme = "ws"
-    elif parts.scheme == "https":
-        scheme = "wss"
-    elif parts.scheme in ("ws", "wss"):
-        scheme = parts.scheme
-    else:
-        raise ValueError("Rime v1 base_url must use http, https, ws, or wss")
-
-    path = parts.path.rstrip("/") + "/ws"
-    return urlunsplit((scheme, parts.netloc, path, parts.query, parts.fragment))
 
 
 def validate_websocket_url(websocket_url: str) -> None:
