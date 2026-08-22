@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import inspect
 import json
 import logging
 import traceback
@@ -65,6 +66,7 @@ class _RimeV1Server:
         await self._site.start()
         port = self._runner.addresses[0][1]
         self.base_url = f"http://127.0.0.1:{port}/coda/v1/coda"
+        self.websocket_url = f"ws://127.0.0.1:{port}/coda/v1/coda/ws"
         self.session = aiohttp.ClientSession()
         return self
 
@@ -162,15 +164,12 @@ class _RimeV1Server:
 
 
 def _v1_tts(server: _RimeV1Server, **kwargs: Any):
-    from livekit.plugins.rime import TTS
+    from livekit.plugins.rime import CodaTTS
 
-    return TTS(
+    return CodaTTS(
         api_key="test-key",
-        model="coda",
         speaker="astra",
-        use_websocket=True,
-        websocket_protocol="v1",
-        base_url=server.base_url,
+        websocket_url=server.websocket_url,
         http_session=server.session,
         **kwargs,
     )
@@ -265,6 +264,36 @@ def test_v1_url_and_capabilities() -> None:
     assert tts._ws_url() == "wss://api.rimetts.com/coda/v1/coda/ws"
     assert tts.capabilities.streaming is True
     assert tts.capabilities.aligned_transcript is False
+
+
+def test_coda_tts_accepts_the_final_websocket_url() -> None:
+    from livekit.plugins.rime import CodaTTS
+
+    websocket_url = "wss://api.rimetts.com/coda/v1/coda/ws"
+    tts = CodaTTS(api_key="test-key", websocket_url=websocket_url)
+
+    assert tts.websocket_url == websocket_url
+    assert tts._ws_url() == websocket_url
+    assert tts.model == "coda"
+    assert tts.capabilities.streaming is True
+    assert tts.capabilities.aligned_transcript is False
+    assert "websocket_protocol" not in inspect.signature(CodaTTS).parameters
+    assert "use_websocket" not in inspect.signature(CodaTTS).parameters
+    assert "model" not in inspect.signature(CodaTTS).parameters
+
+
+@pytest.mark.parametrize(
+    "websocket_url",
+    [
+        "https://api.rimetts.com/coda/v1/coda/ws",
+        "/coda/v1/coda/ws",
+    ],
+)
+def test_coda_tts_rejects_non_websocket_urls(websocket_url: str) -> None:
+    from livekit.plugins.rime import CodaTTS
+
+    with pytest.raises(ValueError, match="absolute ws or wss URL"):
+        CodaTTS(api_key="test-key", websocket_url=websocket_url)
 
 
 @pytest.mark.parametrize(
@@ -477,11 +506,11 @@ async def test_v1_stream_snapshots_options() -> None:
     assert server.requests[0]["start"]["speaker"] == "astra"
 
 
-async def test_v1_stream_snapshots_base_url() -> None:
+async def test_v1_stream_snapshots_websocket_url() -> None:
     async with _RimeV1Server() as first_server, _RimeV1Server() as second_server:
         tts = _v1_tts(first_server)
         first_stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
-        tts.update_options(base_url=second_server.base_url)
+        tts.update_options(websocket_url=second_server.websocket_url)
         second_stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
 
         first_stream.push_text("first")
@@ -757,7 +786,7 @@ async def test_v1_connection_error_does_not_expose_transport_data(
         with pytest.raises(APIConnectionError) as exc_info:
             await _websocket_v1.connect(
                 session,
-                base_url="https://example.com/coda",
+                websocket_url="wss://example.com/coda/ws",
                 api_key="test-key",
                 timeout=1,
             )
@@ -901,13 +930,13 @@ async def test_v1_closes_idle_retired_pools_after_url_changes() -> None:
             tts.prewarm()
             await asyncio.wait_for(first_server.connection_opened.wait(), timeout=2)
 
-            tts.update_options(base_url=second_server.base_url)
+            tts.update_options(websocket_url=second_server.websocket_url)
             await asyncio.wait_for(first_server.connection_closed.wait(), timeout=1)
 
             tts.prewarm()
             await asyncio.wait_for(second_server.connection_opened.wait(), timeout=2)
 
-            tts.update_options(base_url=third_server.base_url)
+            tts.update_options(websocket_url=third_server.websocket_url)
             await asyncio.wait_for(second_server.connection_closed.wait(), timeout=1)
 
             assert first_server.closed_connections == 1
@@ -921,7 +950,7 @@ async def test_v1_closes_retired_pool_after_its_last_stream_finishes() -> None:
     async with _RimeV1Server() as first_server, _RimeV1Server() as second_server:
         tts = _v1_tts(first_server)
         first_stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
-        tts.update_options(base_url=second_server.base_url)
+        tts.update_options(websocket_url=second_server.websocket_url)
 
         first_stream.push_text("first")
         first_stream.end_input()

@@ -148,7 +148,7 @@ def _check_time_scale_factor_supported(
         )
 
 
-class TTS(tts.TTS[Literal["rime_tts_event"]]):
+class _TTSBase(tts.TTS[Literal["rime_tts_event"]]):
     def __init__(
         self,
         *,
@@ -277,12 +277,12 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
 
     def _new_pool(self) -> utils.ConnectionPool[aiohttp.ClientWebSocketResponse]:
         if self._websocket_protocol == "v1":
-            base_url = self._base_url
+            websocket_url = self._ws_url()
 
             async def _connect(timeout: float) -> aiohttp.ClientWebSocketResponse:
                 return await _websocket_v1.connect(
                     self._ensure_session(),
-                    base_url=base_url,
+                    websocket_url=websocket_url,
                     api_key=self._api_key,
                     timeout=timeout,
                 )
@@ -437,7 +437,7 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
             )
         return ChunkedStream(tts=self, input_text=text, conn_options=conn_options)
 
-    def update_options(
+    def _update_options(
         self,
         *,
         model: NotGivenOr[TTSModels | str] = NOT_GIVEN,
@@ -527,12 +527,126 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                 self._pool.invalidate()
 
 
+class TTS(_TTSBase):
+    """Rime TTS adapter for the HTTP and legacy ws3 transports.
+
+    The v1 Coda constructor arguments remain available for compatibility. New
+    Coda WebSocket integrations should use :class:`CodaTTS`.
+    """
+
+    def update_options(
+        self,
+        *,
+        model: NotGivenOr[TTSModels | str] = NOT_GIVEN,
+        speaker: NotGivenOr[str] = NOT_GIVEN,
+        lang: NotGivenOr[TTSLangs | str] = NOT_GIVEN,
+        repetition_penalty: NotGivenOr[float] = NOT_GIVEN,
+        temperature: NotGivenOr[float] = NOT_GIVEN,
+        top_p: NotGivenOr[float] = NOT_GIVEN,
+        max_tokens: NotGivenOr[int] = NOT_GIVEN,
+        sample_rate: NotGivenOr[int] = NOT_GIVEN,
+        time_scale_factor: NotGivenOr[float] = NOT_GIVEN,
+        speed_alpha: NotGivenOr[float] = NOT_GIVEN,
+        reduce_latency: NotGivenOr[bool] = NOT_GIVEN,
+        pause_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
+        phonemize_between_brackets: NotGivenOr[bool] = NOT_GIVEN,
+        base_url: NotGivenOr[str] = NOT_GIVEN,
+    ) -> None:
+        self._update_options(
+            model=model,
+            speaker=speaker,
+            lang=lang,
+            repetition_penalty=repetition_penalty,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            sample_rate=sample_rate,
+            time_scale_factor=time_scale_factor,
+            speed_alpha=speed_alpha,
+            reduce_latency=reduce_latency,
+            pause_between_brackets=pause_between_brackets,
+            phonemize_between_brackets=phonemize_between_brackets,
+            base_url=base_url,
+        )
+
+
+class CodaTTS(_TTSBase):
+    """Rime Coda adapter for the v1 streaming WebSocket protocol."""
+
+    def __init__(
+        self,
+        *,
+        websocket_url: str,
+        speaker: NotGivenOr[str] = NOT_GIVEN,
+        lang: TTSLangs | str = "eng",
+        repetition_penalty: NotGivenOr[float] = NOT_GIVEN,
+        temperature: NotGivenOr[float] = NOT_GIVEN,
+        top_p: NotGivenOr[float] = NOT_GIVEN,
+        max_tokens: NotGivenOr[int] = NOT_GIVEN,
+        time_scale_factor: NotGivenOr[float] = NOT_GIVEN,
+        sample_rate: int = 22050,
+        api_key: NotGivenOr[str] = NOT_GIVEN,
+        http_session: aiohttp.ClientSession | None = None,
+    ) -> None:
+        _websocket_v1.validate_websocket_url(websocket_url)
+        super().__init__(
+            base_url=websocket_url,
+            model="coda",
+            speaker=speaker,
+            lang=lang,
+            repetition_penalty=repetition_penalty,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            time_scale_factor=time_scale_factor,
+            sample_rate=sample_rate,
+            api_key=api_key,
+            http_session=http_session,
+            use_websocket=True,
+            websocket_protocol="v1",
+        )
+
+    @property
+    def websocket_url(self) -> str:
+        return self._base_url
+
+    def _ws_url(self) -> str:
+        return self._base_url
+
+    def update_options(
+        self,
+        *,
+        websocket_url: NotGivenOr[str] = NOT_GIVEN,
+        speaker: NotGivenOr[str] = NOT_GIVEN,
+        lang: NotGivenOr[TTSLangs | str] = NOT_GIVEN,
+        repetition_penalty: NotGivenOr[float] = NOT_GIVEN,
+        temperature: NotGivenOr[float] = NOT_GIVEN,
+        top_p: NotGivenOr[float] = NOT_GIVEN,
+        max_tokens: NotGivenOr[int] = NOT_GIVEN,
+        sample_rate: NotGivenOr[int] = NOT_GIVEN,
+        time_scale_factor: NotGivenOr[float] = NOT_GIVEN,
+    ) -> None:
+        if is_given(websocket_url):
+            _websocket_v1.validate_websocket_url(websocket_url)
+        self._update_options(
+            speaker=speaker,
+            lang=lang,
+            repetition_penalty=repetition_penalty,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            sample_rate=sample_rate,
+            time_scale_factor=time_scale_factor,
+            base_url=websocket_url,
+        )
+
+
 class ChunkedStream(tts.ChunkedStream):
     """Synthesize using the chunked api endpoint"""
 
-    def __init__(self, tts: TTS, input_text: str, conn_options: APIConnectOptions) -> None:
+    def __init__(self, tts: _TTSBase, input_text: str, conn_options: APIConnectOptions) -> None:
         super().__init__(tts=tts, input_text=input_text, conn_options=conn_options)
-        self._tts: TTS = tts
+        self._tts: _TTSBase = tts
         self._opts = replace(tts._opts)
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
@@ -598,9 +712,9 @@ class SynthesizeStream(tts.SynthesizeStream):
     pass segment="immediate" on the TTS to disable server buffering when the agent
     is already feeding sentence-tokenized text."""
 
-    def __init__(self, *, tts: TTS, conn_options: APIConnectOptions) -> None:
+    def __init__(self, *, tts: _TTSBase, conn_options: APIConnectOptions) -> None:
         super().__init__(tts=tts, conn_options=conn_options)
-        self._tts: TTS = tts
+        self._tts: _TTSBase = tts
         self._opts = copy.deepcopy(tts._opts)
         self._pool = tts._pool
         self._end_flush_sentinel: object | None = None

@@ -86,18 +86,26 @@ def websocket_url(base_url: str) -> str:
     return urlunsplit((scheme, parts.netloc, path, parts.query, parts.fragment))
 
 
+def validate_websocket_url(websocket_url: str) -> None:
+    """Validate a caller-supplied v1 WebSocket endpoint."""
+    parts = urlsplit(websocket_url)
+    if parts.scheme not in ("ws", "wss") or not parts.netloc:
+        raise ValueError("Rime v1 websocket_url must be an absolute ws or wss URL")
+
+
 async def connect(
     session: aiohttp.ClientSession,
     *,
-    base_url: str,
+    websocket_url: str,
     api_key: str,
     timeout: float,
 ) -> aiohttp.ClientWebSocketResponse:
     """Open a v1 JSON socket and consume its one connection-level ready event."""
+    validate_websocket_url(websocket_url)
     try:
         ws = await asyncio.wait_for(
             session.ws_connect(
-                websocket_url(base_url),
+                websocket_url,
                 headers={"Authorization": f"Api-Key {api_key}"},
                 protocols=(SUBPROTOCOL,),
             ),

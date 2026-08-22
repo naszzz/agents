@@ -17,25 +17,23 @@ You'll need an API key from Rime. It can be set as an environment variable: `RIM
 ## Streaming Coda WebSocket API
 
 The Rime v1 WebSocket protocol accepts text fragments and returns audio before the input turn
-is complete. It is opt-in. The existing `ws3` protocol remains the default.
+is complete. Use the Coda adapter with the final WebSocket endpoint.
 
 ```python
 import os
 
 from livekit.plugins import rime
 
-tts = rime.TTS(
-    model="coda",
+tts = rime.CodaTTS(
+    websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
     speaker="astra",
     api_key=os.environ["RIME_API_KEY"],
-    use_websocket=True,
-    websocket_protocol="v1",
-    base_url="https://api.rimetts.com/coda/v1/coda",
 )
 ```
 
-The example route is a staging route. Pass the active Coda model route explicitly. The client
-changes `https` to `wss` and adds `/ws`.
+Pass the active Coda WebSocket endpoint explicitly. `CodaTTS` always uses Coda, WebSocket
+streaming, and the v1 JSON protocol. The older `TTS` v1 constructor arguments remain available
+for compatibility.
 
 The first v1 implementation has these limits:
 
