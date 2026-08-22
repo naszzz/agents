@@ -34,10 +34,22 @@ tts = rime.TTS(
 Pass the active Coda WebSocket endpoint explicitly. The presence of `websocket_url` selects Coda,
 WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`.
 
+One LiveKit stream uses one continuous Rime synthesis context. These stream methods map to the
+Rime lifecycle as follows:
+
+| LiveKit method | Rime operation | Result |
+| --- | --- | --- |
+| `stream.flush()` | `flush` | Speak pending text and keep the context open. |
+| `stream.end_input()` | `end` | Finalize input and wait for `done`. |
+| `stream.aclose()` | `cancel` | Cancel synthesis if the context is still active. |
+
+You can send more text after `flush()`. A flush does not cause a `done` event and does not start a
+new synthesis context.
+
 The first v1 implementation has these limits:
 
-- It supports the `coda` model only.
+- WebSocket v1 supports the `coda` model only.
 - It requests raw `audio/pcm` data.
 - It does not provide aligned word timestamps.
-- It does not support `speed_alpha`. Use `time_scale_factor` for supported speed changes.
-- It uses the JSON `rime.v1.json` WebSocket subprotocol.
+- `speed_alpha` is not supported. Use `time_scale_factor` to control speed.
+- The adapter uses the JSON `rime.v1.json` WebSocket subprotocol.

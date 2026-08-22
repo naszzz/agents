@@ -542,11 +542,8 @@ STREAM_TTS = [
     pytest.param(
         lambda: {
             "tts": rime.TTS(
-                model="coda",
+                websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
                 speaker="astra",
-                use_websocket=True,
-                websocket_protocol="v1",
-                base_url="https://api.rimetts.com/coda/v1/coda",
             ),
             "proxy-upstream": "api.rimetts.com:443",
         },
