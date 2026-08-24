@@ -216,8 +216,8 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
 
         input_events = _raw_input_events()
         if self._sentence_tokenizer is not None:
-            # The Coda streaming RFC expects complete sentences. Keep that policy in
-            # this adapter so callers can continue to push raw LLM text fragments.
+            # Keep RFC-style sentence buffering as an explicit comparison mode. The
+            # default path forwards raw fragments so Coda can start without this delay.
             input_events = _sentence_tokenized_input_events(
                 input_events,
                 sentence_tokenizer=self._sentence_tokenizer,

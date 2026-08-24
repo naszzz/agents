@@ -97,6 +97,30 @@ def test_websocket_url_selects_coda_v1() -> None:
     assert "websocket_protocol" not in inspect.signature(TTS).parameters
 
 
+def test_v1_does_not_create_a_sentence_tokenizer_by_default() -> None:
+    from livekit.plugins.rime import TTS
+
+    tts = TTS(
+        api_key="test-key",
+        websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
+    )
+
+    assert tts._sentence_tokenizer is None
+
+
+def test_v1_creates_a_sentence_tokenizer_when_enabled() -> None:
+    from livekit.agents.tokenize.blingfire import SentenceTokenizer
+    from livekit.plugins.rime import TTS
+
+    tts = TTS(
+        api_key="test-key",
+        websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
+        sentence_tokenization=True,
+    )
+
+    assert isinstance(tts._sentence_tokenizer, SentenceTokenizer)
+
+
 def test_v1_rejects_custom_tokenizer_when_sentence_tokenization_is_disabled() -> None:
     from livekit.agents import tokenize
     from livekit.plugins.rime import TTS
@@ -110,11 +134,14 @@ def test_v1_rejects_custom_tokenizer_when_sentence_tokenization_is_disabled() ->
         )
 
 
-def test_sentence_tokenization_switch_requires_coda_v1() -> None:
+@pytest.mark.parametrize("sentence_tokenization", [False, True])
+def test_sentence_tokenization_switch_requires_coda_v1(
+    sentence_tokenization: bool,
+) -> None:
     from livekit.plugins.rime import TTS
 
-    with pytest.raises(ValueError, match="sentence_tokenization=False requires websocket_url"):
-        TTS(api_key="test-key", sentence_tokenization=False)
+    with pytest.raises(ValueError, match="sentence_tokenization requires websocket_url"):
+        TTS(api_key="test-key", sentence_tokenization=sentence_tokenization)
 
 
 @pytest.mark.parametrize(

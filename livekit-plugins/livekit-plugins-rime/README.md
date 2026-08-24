@@ -17,8 +17,8 @@ You'll need an API key from Rime. It can be set as an environment variable: `RIM
 ## Streaming Coda WebSocket API
 
 The Rime v1 WebSocket protocol accepts streaming text and returns audio before the input turn
-is complete. The plugin buffers input fragments into complete sentences before it sends them to
-Coda. Use the Coda adapter with the final WebSocket endpoint.
+is complete. By default, the plugin sends each input fragment to Coda at once. Use the Coda
+adapter with the final WebSocket endpoint.
 
 ```python
 import os
@@ -33,18 +33,17 @@ tts = rime.TTS(
 ```
 
 Pass the active Coda WebSocket endpoint explicitly. The presence of `websocket_url` selects Coda,
-WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`. The plugin uses
-`livekit.agents.tokenize.blingfire.SentenceTokenizer` by default. Pass `tokenizer` to use another
-sentence tokenizer.
+WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`.
 
-Set `sentence_tokenization=False` to forward text fragments without local buffering. This switch
-makes it possible to compare client-side sentence tokenization with Coda's native fragment
-streaming.
+Set `sentence_tokenization=True` to buffer complete sentences before the plugin sends them. This
+comparison mode uses `livekit.agents.tokenize.blingfire.SentenceTokenizer` by default. Pass
+`tokenizer` to select another LiveKit sentence tokenizer. Passing a tokenizer also enables this
+mode unless `sentence_tokenization=False` is explicit.
 
 ```python
 tts = rime.TTS(
     websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
-    sentence_tokenization=False,
+    sentence_tokenization=True,
     api_key=os.environ["RIME_API_KEY"],
 )
 ```
@@ -59,7 +58,9 @@ Rime lifecycle as follows:
 | `stream.aclose()` | `cancel` | Cancel synthesis if the context is still active. |
 
 You can send more text after `flush()`. A flush does not cause a `done` event and does not start a
-new synthesis context.
+new synthesis context. The plugin does not infer sentence boundaries in the default mode. A caller
+that knows a safe boundary can call `flush()` to speak pending text without losing the active Coda
+context.
 
 The first v1 implementation has these limits:
 

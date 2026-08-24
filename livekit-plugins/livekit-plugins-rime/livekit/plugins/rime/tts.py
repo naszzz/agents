@@ -164,7 +164,7 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         api_key: NotGivenOr[str] = NOT_GIVEN,
         http_session: aiohttp.ClientSession | None = None,
         tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
-        sentence_tokenization: bool = True,
+        sentence_tokenization: bool = False,
     ) -> None: ...
 
     @overload
@@ -219,10 +219,14 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         use_websocket: bool = False,
         segment: NotGivenOr[str] = NOT_GIVEN,
         tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
-        sentence_tokenization: bool = True,
+        sentence_tokenization: NotGivenOr[bool] = NOT_GIVEN,
     ) -> None:
         websocket_v1_url = websocket_url if is_given(websocket_url) else None
+        v1_sentence_tokenization = False
         if websocket_v1_url is not None:
+            v1_sentence_tokenization = (
+                sentence_tokenization if is_given(sentence_tokenization) else is_given(tokenizer)
+            )
             _websocket_v1.validate_websocket_url(websocket_v1_url)
             if is_given(base_url):
                 raise ValueError("websocket_url cannot be used with base_url")
@@ -232,7 +236,7 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                 raise ValueError("websocket_url enables WebSocket streaming; omit use_websocket")
             if is_given(speed_alpha):
                 raise ValueError("speed_alpha is not supported by the Rime v1 WebSocket protocol")
-            if not sentence_tokenization and is_given(tokenizer):
+            if not v1_sentence_tokenization and is_given(tokenizer):
                 raise ValueError("tokenizer requires sentence_tokenization=True")
             if any(
                 is_given(value)
@@ -246,8 +250,8 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                 raise ValueError("websocket_url cannot be used with ws3 or Mist options")
             use_websocket = True
             resolved_base_url = RIME_BASE_URL
-        elif not sentence_tokenization:
-            raise ValueError("sentence_tokenization=False requires websocket_url")
+        elif is_given(sentence_tokenization):
+            raise ValueError("sentence_tokenization requires websocket_url")
         elif is_given(base_url):
             # Infer streaming mode from URL prefix; an explicit use_websocket=True still wins.
             use_websocket = use_websocket or base_url.startswith(("ws://", "wss://"))
@@ -322,15 +326,19 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         self._base_url = resolved_base_url
         self._use_websocket = use_websocket
         self._segment = segment if is_given(segment) else "bySentence"
-        self._sentence_tokenizer = (
-            tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
-        )
+        self._sentence_tokenizer: tokenize.SentenceTokenizer | None
+        if websocket_v1_url is not None and not v1_sentence_tokenization:
+            self._sentence_tokenizer = None
+        else:
+            self._sentence_tokenizer = (
+                tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
+            )
         self._websocket_v1_adapter = (
             WebSocketV1Adapter(
                 websocket_v1_url=websocket_v1_url,
                 api_key=self._api_key,
                 ensure_session=self._ensure_session,
-                sentence_tokenizer=(self._sentence_tokenizer if sentence_tokenization else None),
+                sentence_tokenizer=self._sentence_tokenizer,
             )
             if websocket_v1_url is not None
             else None
@@ -663,7 +671,9 @@ class _WS3SynthesizeStream(tts.SynthesizeStream):
         )
         output_emitter.start_segment(segment_id=context_id)
 
-        sent_stream = self._tts._sentence_tokenizer.stream()
+        sentence_tokenizer = self._tts._sentence_tokenizer
+        assert sentence_tokenizer is not None
+        sent_stream = sentence_tokenizer.stream()
         input_sent_event = asyncio.Event()
         empty_input = False
 
