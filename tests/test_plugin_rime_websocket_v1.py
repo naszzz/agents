@@ -198,11 +198,12 @@ async def test_v1_streams_audio_before_end_and_maps_start_options() -> None:
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
         try:
             first_event = asyncio.create_task(anext(stream))
-            stream.push_text("hello")
+            stream.push_text("Hello from ")
+            stream.push_text("LiveKit today. Next")
             first = await asyncio.wait_for(first_event, timeout=2)
             assert first.frame.data
 
-            stream.push_text(" world")
+            stream.push_text(" sentence.")
             stream.end_input()
             remaining = await _collect(stream)
         finally:
@@ -215,8 +216,8 @@ async def test_v1_streams_audio_before_end_and_maps_start_options() -> None:
     assert server.headers[0]["Sec-WebSocket-Protocol"] == "rime.v1.json"
     assert _payloads(server) == ["start", "text", "text", "end"]
     assert [request["text"] for request in server.requests if "text" in request] == [
-        "hello",
-        " world",
+        "Hello from LiveKit today. ",
+        "Next sentence. ",
     ]
     start = server.requests[0]["start"]
     assert start == {
@@ -249,6 +250,50 @@ async def test_v1_rejects_wrong_ready_protocol() -> None:
         await tts.aclose()
 
 
+async def test_v1_buffers_fragments_until_it_has_a_complete_sentence() -> None:
+    async with _RimeV1Server() as server:
+        tts = _v1_tts(server)
+        stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
+        stream.push_text("This is the first sentence. ")
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(server.text_received.wait(), timeout=0.05)
+
+        stream.push_text("Second")
+        await asyncio.wait_for(server.text_received.wait(), timeout=2)
+        stream.end_input()
+        await _collect(stream)
+        await stream.aclose()
+        await tts.aclose()
+
+    assert [request["text"] for request in server.requests if "text" in request] == [
+        "This is the first sentence. ",
+        "Second ",
+    ]
+
+
+async def test_v1_forwards_fragments_when_sentence_tokenization_is_disabled() -> None:
+    async with _RimeV1Server() as server:
+        tts = _v1_tts(server, sentence_tokenization=False)
+        stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
+        try:
+            first_event = asyncio.create_task(anext(stream))
+            stream.push_text("hello")
+            first = await asyncio.wait_for(first_event, timeout=2)
+            assert first.frame.data
+
+            stream.push_text(" world")
+            stream.end_input()
+            await _collect(stream)
+        finally:
+            await stream.aclose()
+            await tts.aclose()
+
+    assert [request["text"] for request in server.requests if "text" in request] == [
+        "hello",
+        " world",
+    ]
+
+
 async def test_v1_nonfinal_flush_does_not_replace_end() -> None:
     async with _RimeV1Server() as server:
         tts = _v1_tts(server)
@@ -268,7 +313,6 @@ async def test_v1_sends_nonfinal_flush_without_more_input() -> None:
         tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
         stream.push_text("first")
-        await asyncio.wait_for(server.text_received.wait(), timeout=2)
         stream.flush()
         try:
             await asyncio.wait_for(server.flush_received.wait(), timeout=0.2)
@@ -288,7 +332,6 @@ async def test_v1_resumes_context_after_nonfinal_flush() -> None:
         tts.on("metrics_collected", metrics.append)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
         stream.push_text("first")
-        await asyncio.wait_for(server.text_received.wait(), timeout=2)
         stream.flush()
         await asyncio.wait_for(server.flush_received.wait(), timeout=2)
         stream.push_text("second")
@@ -299,8 +342,8 @@ async def test_v1_resumes_context_after_nonfinal_flush() -> None:
 
     assert _payloads(server) == ["start", "text", "flush", "text", "end"]
     assert [request["text"] for request in server.requests if "text" in request] == [
-        "first",
-        "second",
+        "first ",
+        "second ",
     ]
     assert len({request["contextId"] for request in server.requests}) == 1
     assert sum(event.is_final for event in events) == 1
@@ -374,9 +417,9 @@ async def test_v1_stream_snapshots_websocket_url() -> None:
         await second_stream.aclose()
         await tts.aclose()
 
-    assert [request["text"] for request in first_server.requests if "text" in request] == ["first"]
+    assert [request["text"] for request in first_server.requests if "text" in request] == ["first "]
     assert [request["text"] for request in second_server.requests if "text" in request] == [
-        "second"
+        "second "
     ]
 
 
@@ -384,7 +427,7 @@ async def test_v1_clean_interruption_cancels_and_reuses_socket() -> None:
     async with _RimeV1Server(response_mode="no_audio") as server:
         tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
-        stream.push_text("stop me")
+        stream.push_text("Please stop this synthesis now. Pending")
         await asyncio.wait_for(server.text_received.wait(), timeout=2)
         await stream.aclose()
 
@@ -404,7 +447,7 @@ async def test_v1_interruption_stays_cancelled_without_retry() -> None:
         stream = tts.stream(
             conn_options=APIConnectOptions(max_retry=1, timeout=0.1, retry_interval=0)
         )
-        stream.push_text("stop me")
+        stream.push_text("Please stop this synthesis now. Pending")
         await asyncio.wait_for(server.text_received.wait(), timeout=2)
         await asyncio.wait_for(stream.aclose(), timeout=0.5)
         await tts.aclose()
@@ -438,7 +481,7 @@ async def test_v1_cancels_when_start_write_is_interrupted(
         monkeypatch.setattr(_websocket_v1, "_send_envelope", _send_envelope)
         tts = _v1_tts(server)
         interrupted = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
-        interrupted.push_text("stop me")
+        interrupted.push_text("Please stop this synthesis now. Pending")
         await asyncio.wait_for(start_written.wait(), timeout=2)
         await interrupted.aclose()
 
@@ -458,7 +501,7 @@ async def test_v1_closes_socket_when_cancel_has_no_reply() -> None:
     async with _RimeV1Server(response_mode="no_audio", cancel_reply=False) as server:
         tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=0.1))
-        stream.push_text("stop me")
+        stream.push_text("Please stop this synthesis now. Pending")
         await asyncio.wait_for(server.text_received.wait(), timeout=2)
         await stream.aclose()
 
@@ -494,7 +537,7 @@ async def test_v1_rejects_malformed_cancelled_before_socket_reuse() -> None:
     async with _RimeV1Server(response_mode="malformed_cancelled") as server:
         tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
-        stream.push_text("stop me")
+        stream.push_text("Please stop this synthesis now. Pending")
         await asyncio.wait_for(server.text_received.wait(), timeout=2)
         await stream.aclose()
 

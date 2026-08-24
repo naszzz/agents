@@ -16,8 +16,9 @@ You'll need an API key from Rime. It can be set as an environment variable: `RIM
 
 ## Streaming Coda WebSocket API
 
-The Rime v1 WebSocket protocol accepts text fragments and returns audio before the input turn
-is complete. Use the Coda adapter with the final WebSocket endpoint.
+The Rime v1 WebSocket protocol accepts streaming text and returns audio before the input turn
+is complete. The plugin buffers input fragments into complete sentences before it sends them to
+Coda. Use the Coda adapter with the final WebSocket endpoint.
 
 ```python
 import os
@@ -32,7 +33,21 @@ tts = rime.TTS(
 ```
 
 Pass the active Coda WebSocket endpoint explicitly. The presence of `websocket_url` selects Coda,
-WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`.
+WebSocket streaming, and the v1 JSON protocol. The speaker defaults to `astra`. The plugin uses
+`livekit.agents.tokenize.blingfire.SentenceTokenizer` by default. Pass `tokenizer` to use another
+sentence tokenizer.
+
+Set `sentence_tokenization=False` to forward text fragments without local buffering. This switch
+makes it possible to compare client-side sentence tokenization with Coda's native fragment
+streaming.
+
+```python
+tts = rime.TTS(
+    websocket_url="wss://api.rimetts.com/coda/v1/coda/ws",
+    sentence_tokenization=False,
+    api_key=os.environ["RIME_API_KEY"],
+)
+```
 
 One LiveKit stream uses one continuous Rime synthesis context. These stream methods map to the
 Rime lifecycle as follows:

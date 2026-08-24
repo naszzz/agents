@@ -163,6 +163,8 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         sample_rate: int = 22050,
         api_key: NotGivenOr[str] = NOT_GIVEN,
         http_session: aiohttp.ClientSession | None = None,
+        tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
+        sentence_tokenization: bool = True,
     ) -> None: ...
 
     @overload
@@ -217,6 +219,7 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         use_websocket: bool = False,
         segment: NotGivenOr[str] = NOT_GIVEN,
         tokenizer: NotGivenOr[tokenize.SentenceTokenizer] = NOT_GIVEN,
+        sentence_tokenization: bool = True,
     ) -> None:
         websocket_v1_url = websocket_url if is_given(websocket_url) else None
         if websocket_v1_url is not None:
@@ -229,6 +232,8 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                 raise ValueError("websocket_url enables WebSocket streaming; omit use_websocket")
             if is_given(speed_alpha):
                 raise ValueError("speed_alpha is not supported by the Rime v1 WebSocket protocol")
+            if not sentence_tokenization and is_given(tokenizer):
+                raise ValueError("tokenizer requires sentence_tokenization=True")
             if any(
                 is_given(value)
                 for value in (
@@ -236,12 +241,13 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                     pause_between_brackets,
                     phonemize_between_brackets,
                     segment,
-                    tokenizer,
                 )
             ):
                 raise ValueError("websocket_url cannot be used with ws3 or Mist options")
             use_websocket = True
             resolved_base_url = RIME_BASE_URL
+        elif not sentence_tokenization:
+            raise ValueError("sentence_tokenization=False requires websocket_url")
         elif is_given(base_url):
             # Infer streaming mode from URL prefix; an explicit use_websocket=True still wins.
             use_websocket = use_websocket or base_url.startswith(("ws://", "wss://"))
@@ -316,11 +322,15 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         self._base_url = resolved_base_url
         self._use_websocket = use_websocket
         self._segment = segment if is_given(segment) else "bySentence"
+        self._sentence_tokenizer = (
+            tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
+        )
         self._websocket_v1_adapter = (
             WebSocketV1Adapter(
                 websocket_v1_url=websocket_v1_url,
                 api_key=self._api_key,
                 ensure_session=self._ensure_session,
+                sentence_tokenizer=(self._sentence_tokenizer if sentence_tokenization else None),
             )
             if websocket_v1_url is not None
             else None
@@ -329,9 +339,6 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         self._total_timeout = _timeout_for_model(resolved_model)
 
         self._streams: weakref.WeakSet[tts.SynthesizeStream] = weakref.WeakSet()
-        self._sentence_tokenizer = (
-            tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
-        )
         self._ws3_pool = (
             self._new_ws3_pool()
             if self._use_websocket and self._websocket_v1_adapter is None

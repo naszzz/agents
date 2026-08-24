@@ -19,7 +19,7 @@ from collections.abc import AsyncIterable, Callable
 
 import aiohttp
 
-from livekit.agents import APIConnectOptions, tts, utils
+from livekit.agents import APIConnectOptions, tokenize, tts, utils
 
 from . import _websocket_v1
 from .log import logger
@@ -36,10 +36,12 @@ class WebSocketV1Adapter:
         websocket_v1_url: str,
         api_key: str,
         ensure_session: Callable[[], aiohttp.ClientSession],
+        sentence_tokenizer: tokenize.SentenceTokenizer | None,
     ) -> None:
         self._websocket_v1_url = websocket_v1_url
         self._api_key = api_key
         self._ensure_session = ensure_session
+        self._sentence_tokenizer = sentence_tokenizer
         self._retired_pools: set[_Pool] = set()
         self._pool_stream_counts: dict[_Pool, int] = {}
         self._pool_close_tasks: set[asyncio.Task[None]] = set()
@@ -76,6 +78,7 @@ class WebSocketV1Adapter:
             pool=pool,
             options=options,
             conn_options=conn_options,
+            sentence_tokenizer=self._sentence_tokenizer,
         )
         self._retain_pool(pool)
 
@@ -157,10 +160,12 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
         pool: _Pool,
         options: _websocket_v1.SynthesisOptions,
         conn_options: APIConnectOptions,
+        sentence_tokenizer: tokenize.SentenceTokenizer | None,
     ) -> None:
         super().__init__(tts=tts_instance, conn_options=conn_options)
         self._pool = pool
         self._options = options
+        self._sentence_tokenizer = sentence_tokenizer
         self._end_flush_sentinel: object | None = None
 
     def _enqueue_flush_sentinel(self) -> tts.SynthesizeStream._FlushSentinel:
@@ -201,13 +206,23 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
         await super().aclose()
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
-        async def _input_events() -> AsyncIterable[str | _websocket_v1.Flush]:
+        async def _raw_input_events() -> AsyncIterable[str | _websocket_v1.Flush]:
             async for event in self._input_ch:
                 if isinstance(event, self._FlushSentinel):
                     if event is not self._end_flush_sentinel:
                         yield _websocket_v1.Flush()
                 else:
                     yield event
+
+        input_events = _raw_input_events()
+        if self._sentence_tokenizer is not None:
+            # The Coda streaming RFC expects complete sentences. Keep that policy in
+            # this adapter so callers can continue to push raw LLM text fragments.
+            input_events = _sentence_tokenized_input_events(
+                input_events,
+                sentence_tokenizer=self._sentence_tokenizer,
+                language=self._options.language,
+            )
 
         ws = await self._pool.get(timeout=self._conn_options.timeout)
         self._acquire_time = self._pool.last_acquire_time
@@ -218,7 +233,7 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
                 ws,
                 context_id=utils.shortuuid(),
                 options=self._options,
-                input_events=_input_events(),
+                input_events=input_events,
                 output_emitter=output_emitter,
                 timeout=self._conn_options.timeout,
                 mark_started=self._mark_started,
@@ -233,3 +248,59 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
             else:
                 self._pool.remove(ws)
                 await _websocket_v1.close(ws)
+
+
+async def _sentence_tokenized_input_events(
+    input_events: AsyncIterable[str | _websocket_v1.Flush],
+    *,
+    sentence_tokenizer: tokenize.SentenceTokenizer,
+    language: str,
+) -> AsyncIterable[str | _websocket_v1.Flush]:
+    """Convert text fragments to complete sentences while preserving flush order."""
+    output = utils.aio.Chan[str | _websocket_v1.Flush]()
+
+    async def _drive_input() -> None:
+        sentence_stream = sentence_tokenizer.stream(language=language)
+        forward_task: asyncio.Task[None] | None = None
+
+        async def _forward_sentences() -> None:
+            async for event in sentence_stream:
+                text = event.token
+                if text and not text[-1].isspace():
+                    text += " "
+                if text:
+                    output.send_nowait(text)
+
+        def _start_forwarding() -> asyncio.Task[None]:
+            return asyncio.create_task(
+                _forward_sentences(), name="rime-v1-sentence-tokenizer-output"
+            )
+
+        try:
+            forward_task = _start_forwarding()
+            async for event in input_events:
+                if isinstance(event, _websocket_v1.Flush):
+                    sentence_stream.end_input()
+                    await forward_task
+                    output.send_nowait(event)
+                    sentence_stream = sentence_tokenizer.stream(language=language)
+                    forward_task = _start_forwarding()
+                else:
+                    sentence_stream.push_text(event)
+
+            sentence_stream.end_input()
+            await forward_task
+        finally:
+            if not sentence_stream.closed:
+                await sentence_stream.aclose()
+            if forward_task is not None:
+                await utils.aio.gracefully_cancel(forward_task)
+            output.close()
+
+    input_task = asyncio.create_task(_drive_input(), name="rime-v1-sentence-tokenizer-input")
+    try:
+        async for event in output:
+            yield event
+        await input_task
+    finally:
+        await utils.aio.gracefully_cancel(input_task)
