@@ -44,8 +44,7 @@ from livekit.agents.types import (
 from livekit.agents.utils import is_given
 from livekit.agents.voice.io import TimedString
 
-from . import _websocket_v1
-from ._websocket_v1_adapter import WebSocketV1Adapter
+from ._websocket_v1_adapter import CodaV1SynthesisOptions, WebSocketV1Adapter
 from .langs import TTSLangs
 from .log import logger
 from .models import DefaultCodaVoice, DefaultMistVoice, TTSModels
@@ -221,7 +220,6 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
     ) -> None:
         websocket_v1_url = websocket_url if is_given(websocket_url) else None
         if websocket_v1_url is not None:
-            _websocket_v1.validate_websocket_url(websocket_v1_url)
             if is_given(base_url):
                 raise ValueError("websocket_url cannot be used with base_url")
             if is_given(model):
@@ -316,18 +314,17 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         self._base_url = resolved_base_url
         self._use_websocket = use_websocket
         self._segment = segment if is_given(segment) else "bySentence"
-        if is_given(tokenizer):
-            self._sentence_tokenizer = tokenizer
-        elif websocket_v1_url is not None:
-            self._sentence_tokenizer = tokenize.blingfire.SentenceTokenizer(min_sentence_len=1)
-        else:
-            self._sentence_tokenizer = tokenize.blingfire.SentenceTokenizer()
+        self._sentence_tokenizer: tokenize.SentenceTokenizer | None = None
+        if websocket_v1_url is None:
+            self._sentence_tokenizer = (
+                tokenizer if is_given(tokenizer) else tokenize.blingfire.SentenceTokenizer()
+            )
         self._websocket_v1_adapter = (
             WebSocketV1Adapter(
                 websocket_v1_url=websocket_v1_url,
                 api_key=self._api_key,
                 ensure_session=self._ensure_session,
-                sentence_tokenizer=self._sentence_tokenizer,
+                sentence_tokenizer=tokenizer if is_given(tokenizer) else None,
             )
             if websocket_v1_url is not None
             else None
@@ -417,7 +414,7 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         if self._websocket_v1_adapter is not None:
             s = self._websocket_v1_adapter.stream(
                 tts_instance=self,
-                options=self._websocket_v1_options(),
+                options=self._coda_v1_synthesis_options(),
                 conn_options=conn_options,
             )
         else:
@@ -425,24 +422,20 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
         self._streams.add(s)
         return s
 
-    def _websocket_v1_options(self) -> _websocket_v1.SynthesisOptions:
+    def _coda_v1_synthesis_options(self) -> CodaV1SynthesisOptions:
         coda = self._opts.coda_options
-        if coda is None or not is_given(coda.lang) or not is_given(coda.sample_rate):
-            raise APIError("Rime v1 requires Coda language and sample_rate", retryable=False)
+        if coda is None:
+            raise APIError("Rime v1 requires Coda options", retryable=False)
 
-        return _websocket_v1.SynthesisOptions(
+        return CodaV1SynthesisOptions(
             speaker=self._opts.speaker,
-            language=str(coda.lang),
+            language=str(coda.lang) if is_given(coda.lang) else NOT_GIVEN,
             sampling_rate=coda.sample_rate,
-            repetition_penalty=(
-                coda.repetition_penalty if is_given(coda.repetition_penalty) else None
-            ),
-            temperature=coda.temperature if is_given(coda.temperature) else None,
-            top_p=coda.top_p if is_given(coda.top_p) else None,
-            max_tokens=coda.max_tokens if is_given(coda.max_tokens) else None,
-            time_scale_factor=(
-                coda.time_scale_factor if is_given(coda.time_scale_factor) else None
-            ),
+            repetition_penalty=coda.repetition_penalty,
+            temperature=coda.temperature,
+            top_p=coda.top_p,
+            max_tokens=coda.max_tokens,
+            time_scale_factor=coda.time_scale_factor,
         )
 
     async def aclose(self) -> None:
@@ -498,8 +491,6 @@ class TTS(tts.TTS[Literal["rime_tts_event"]]):
                 )
             ):
                 raise ValueError("Coda v1 cannot be updated with ws3 or Mist options")
-            if is_given(websocket_url):
-                _websocket_v1.validate_websocket_url(websocket_url)
         elif is_given(websocket_url):
             raise ValueError("websocket_url can only update a TTS constructed with websocket_url")
 

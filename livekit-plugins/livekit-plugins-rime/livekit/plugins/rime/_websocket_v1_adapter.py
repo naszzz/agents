@@ -16,15 +16,51 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterable, Callable
+from dataclasses import dataclass
 
 import aiohttp
 
-from livekit.agents import APIConnectOptions, tokenize, tts, utils
+from livekit.agents import APIConnectOptions, APIError, tokenize, tts, utils
+from livekit.agents.types import NOT_GIVEN, NotGivenOr
+from livekit.agents.utils import is_given
 
 from . import _websocket_v1
 from .log import logger
 
 _Pool = utils.ConnectionPool[aiohttp.ClientWebSocketResponse]
+
+
+@dataclass(frozen=True)
+class CodaV1SynthesisOptions:
+    """Coda settings before conversion to the WebSocket v1 wire format."""
+
+    speaker: str
+    language: NotGivenOr[str] = NOT_GIVEN
+    sampling_rate: NotGivenOr[int] = NOT_GIVEN
+    repetition_penalty: NotGivenOr[float] = NOT_GIVEN
+    temperature: NotGivenOr[float] = NOT_GIVEN
+    top_p: NotGivenOr[float] = NOT_GIVEN
+    max_tokens: NotGivenOr[int] = NOT_GIVEN
+    time_scale_factor: NotGivenOr[float] = NOT_GIVEN
+
+    def _to_protocol(self) -> _websocket_v1.SynthesisOptions:
+        if not is_given(self.language) or not is_given(self.sampling_rate):
+            raise APIError("Rime v1 requires Coda language and sample_rate", retryable=False)
+
+        return _websocket_v1.SynthesisOptions(
+            speaker=self.speaker,
+            language=self.language,
+            sampling_rate=self.sampling_rate,
+            repetition_penalty=(
+                self.repetition_penalty if is_given(self.repetition_penalty) else None
+            ),
+            temperature=self.temperature if is_given(self.temperature) else None,
+            top_p=self.top_p if is_given(self.top_p) else None,
+            max_tokens=self.max_tokens if is_given(self.max_tokens) else None,
+            time_scale_factor=(
+                self.time_scale_factor if is_given(self.time_scale_factor) else None
+            ),
+        )
 
 
 class WebSocketV1Adapter:
@@ -36,12 +72,17 @@ class WebSocketV1Adapter:
         websocket_v1_url: str,
         api_key: str,
         ensure_session: Callable[[], aiohttp.ClientSession],
-        sentence_tokenizer: tokenize.SentenceTokenizer,
+        sentence_tokenizer: tokenize.SentenceTokenizer | None = None,
     ) -> None:
+        _websocket_v1.validate_websocket_url(websocket_v1_url)
         self._websocket_v1_url = websocket_v1_url
         self._api_key = api_key
         self._ensure_session = ensure_session
-        self._sentence_tokenizer = sentence_tokenizer
+        self._sentence_tokenizer = (
+            sentence_tokenizer
+            if sentence_tokenizer is not None
+            else tokenize.blingfire.SentenceTokenizer(min_sentence_len=1)
+        )
         self._retired_pools: set[_Pool] = set()
         self._pool_stream_counts: dict[_Pool, int] = {}
         self._pool_close_tasks: set[asyncio.Task[None]] = set()
@@ -69,14 +110,14 @@ class WebSocketV1Adapter:
         self,
         *,
         tts_instance: tts.TTS,
-        options: _websocket_v1.SynthesisOptions,
+        options: CodaV1SynthesisOptions,
         conn_options: APIConnectOptions,
     ) -> _WebSocketV1SynthesizeStream:
         pool = self._pool
         stream = _WebSocketV1SynthesizeStream(
             tts_instance=tts_instance,
             pool=pool,
-            options=options,
+            options=options._to_protocol(),
             conn_options=conn_options,
             sentence_tokenizer=self._sentence_tokenizer,
         )

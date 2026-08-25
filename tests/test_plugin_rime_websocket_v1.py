@@ -165,7 +165,6 @@ def _v1_tts(server: _RimeV1Server, **kwargs: Any):
 
     return TTS(
         api_key="test-key",
-        speaker="astra",
         websocket_url=server.websocket_url,
         http_session=server.session,
         **kwargs,
@@ -271,7 +270,7 @@ async def test_v1_buffers_fragments_into_complete_sentences() -> None:
     ]
 
 
-async def test_v1_preserves_midword_punctuation_and_decimal_fragment_boundaries() -> None:
+async def test_v1_default_tokenizer_preserves_fragment_boundaries() -> None:
     async with _RimeV1Server() as server:
         tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
@@ -290,6 +289,29 @@ async def test_v1_preserves_midword_punctuation_and_decimal_fragment_boundaries(
         "The price is 1.7 dollars. ",
         "Hello world. ",
         "Next sentence. ",
+    ]
+
+
+async def test_v1_uses_custom_tokenizer_behavior() -> None:
+    from livekit.agents import tokenize
+
+    async with _RimeV1Server() as server:
+        tokenizer = tokenize.basic.SentenceTokenizer(
+            min_sentence_len=1000,
+            stream_context_len=1,
+        )
+        tts = _v1_tts(server, tokenizer=tokenizer)
+        stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
+        try:
+            stream.push_text("First sentence. Second sentence.")
+            stream.end_input()
+            await _collect(stream)
+        finally:
+            await stream.aclose()
+            await tts.aclose()
+
+    assert [request["text"] for request in server.requests if "text" in request] == [
+        "First sentence. Second sentence. "
     ]
 
 
