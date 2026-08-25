@@ -36,7 +36,7 @@ class WebSocketV1Adapter:
         websocket_v1_url: str,
         api_key: str,
         ensure_session: Callable[[], aiohttp.ClientSession],
-        sentence_tokenizer: tokenize.SentenceTokenizer | None,
+        sentence_tokenizer: tokenize.SentenceTokenizer,
     ) -> None:
         self._websocket_v1_url = websocket_v1_url
         self._api_key = api_key
@@ -160,7 +160,7 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
         pool: _Pool,
         options: _websocket_v1.SynthesisOptions,
         conn_options: APIConnectOptions,
-        sentence_tokenizer: tokenize.SentenceTokenizer | None,
+        sentence_tokenizer: tokenize.SentenceTokenizer,
     ) -> None:
         super().__init__(tts=tts_instance, conn_options=conn_options)
         self._pool = pool
@@ -214,15 +214,11 @@ class _WebSocketV1SynthesizeStream(tts.SynthesizeStream):
                 else:
                     yield event
 
-        input_events = _raw_input_events()
-        if self._sentence_tokenizer is not None:
-            # Keep RFC-style sentence buffering as an explicit comparison mode. The
-            # default path forwards raw fragments so Coda can start without this delay.
-            input_events = _sentence_tokenized_input_events(
-                input_events,
-                sentence_tokenizer=self._sentence_tokenizer,
-                language=self._options.language,
-            )
+        input_events = _sentence_tokenized_input_events(
+            _raw_input_events(),
+            sentence_tokenizer=self._sentence_tokenizer,
+            language=self._options.language,
+        )
 
         ws = await self._pool.get(timeout=self._conn_options.timeout)
         self._acquire_time = self._pool.last_acquire_time

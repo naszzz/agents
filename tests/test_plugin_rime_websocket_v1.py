@@ -214,11 +214,10 @@ async def test_v1_streams_audio_before_end_and_maps_start_options() -> None:
     assert server.paths == ["/coda/v1/coda/ws"]
     assert server.headers[0]["Authorization"] == "Api-Key test-key"
     assert server.headers[0]["Sec-WebSocket-Protocol"] == "rime.v1.json"
-    assert _payloads(server) == ["start", "text", "text", "text", "end"]
+    assert _payloads(server) == ["start", "text", "text", "end"]
     assert [request["text"] for request in server.requests if "text" in request] == [
-        "Hello from ",
-        "LiveKit today. Next",
-        " sentence.",
+        "Hello from LiveKit today. ",
+        "Next sentence. ",
     ]
     start = server.requests[0]["start"]
     assert start == {
@@ -251,9 +250,9 @@ async def test_v1_rejects_wrong_ready_protocol() -> None:
         await tts.aclose()
 
 
-async def test_v1_buffers_fragments_when_sentence_tokenization_is_enabled() -> None:
+async def test_v1_buffers_fragments_into_complete_sentences() -> None:
     async with _RimeV1Server() as server:
-        tts = _v1_tts(server, sentence_tokenization=True)
+        tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
         stream.push_text("This is the first sentence. ")
         with pytest.raises(asyncio.TimeoutError):
@@ -272,25 +271,15 @@ async def test_v1_buffers_fragments_when_sentence_tokenization_is_enabled() -> N
     ]
 
 
-@pytest.mark.parametrize("sentence_tokenization", [None, False], ids=["default", "disabled"])
-async def test_v1_forwards_fragments_without_sentence_tokenization(
-    sentence_tokenization: bool | None,
-) -> None:
+async def test_v1_preserves_midword_punctuation_and_decimal_fragment_boundaries() -> None:
     async with _RimeV1Server() as server:
-        kwargs = (
-            {}
-            if sentence_tokenization is None
-            else {"sentence_tokenization": sentence_tokenization}
-        )
-        tts = _v1_tts(server, **kwargs)
+        tts = _v1_tts(server)
         stream = tts.stream(conn_options=APIConnectOptions(max_retry=0, timeout=2))
         try:
-            first_event = asyncio.create_task(anext(stream))
-            stream.push_text("hello")
-            first = await asyncio.wait_for(first_event, timeout=2)
-            assert first.frame.data
-
-            stream.push_text(" world")
+            stream.push_text("The price is 1.")
+            stream.push_text("7 dollars. Hel")
+            stream.push_text("lo world. Next")
+            stream.push_text(" sentence.")
             stream.end_input()
             await _collect(stream)
         finally:
@@ -298,8 +287,9 @@ async def test_v1_forwards_fragments_without_sentence_tokenization(
             await tts.aclose()
 
     assert [request["text"] for request in server.requests if "text" in request] == [
-        "hello",
-        " world",
+        "The price is 1.7 dollars. ",
+        "Hello world. ",
+        "Next sentence. ",
     ]
 
 
@@ -351,8 +341,8 @@ async def test_v1_resumes_context_after_nonfinal_flush() -> None:
 
     assert _payloads(server) == ["start", "text", "flush", "text", "end"]
     assert [request["text"] for request in server.requests if "text" in request] == [
-        "first",
-        "second",
+        "first ",
+        "second ",
     ]
     assert len({request["contextId"] for request in server.requests}) == 1
     assert sum(event.is_final for event in events) == 1
@@ -426,9 +416,9 @@ async def test_v1_stream_snapshots_websocket_url() -> None:
         await second_stream.aclose()
         await tts.aclose()
 
-    assert [request["text"] for request in first_server.requests if "text" in request] == ["first"]
+    assert [request["text"] for request in first_server.requests if "text" in request] == ["first "]
     assert [request["text"] for request in second_server.requests if "text" in request] == [
-        "second"
+        "second "
     ]
 
 
