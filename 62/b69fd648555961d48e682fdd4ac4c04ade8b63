@@ -1,0 +1,21 @@
+livekit-agents/livekit/agents/tts/tts.py
+  s_1f3f56ab74216f::t_483d10501b7910 1314-1319
+tests/test_audio_emitter.py
+  s_1f3f56ab74216f::t_9cae7acb950093 293-295,332-349
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "62b69fd648555961d48e682fdd4ac4c04ade8b63",
+  "prompts": {},
+  "sessions": {
+    "s_1f3f56ab74216f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0e5e5-ae5a-74a2-a604-5aa3c4f1cb64",
+        "model": "unknown"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
