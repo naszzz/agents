@@ -1,0 +1,26 @@
+tests/docker-compose.yml
+  s_3334d6f33a9904::t_577cf8fd784f79 82
+tests/test_tts.py
+  s_3334d6f33a9904::t_577cf8fd784f79 545-546,549
+livekit-plugins/livekit-plugins-rime/README.md
+  s_3334d6f33a9904::t_577cf8fd784f79 29-30,37-40,42,70-72,93-94
+tests/test_plugin_rime_tts.py
+  s_3334d6f33a9904::t_577cf8fd784f79 118,121-127,435-443,449,702-714,719,724,726,737
+  s_3334d6f33a9904::t_dbd7eb15e04720 730-733
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d95dd6d377338e0f743c7d001402f8b24e528b88",
+  "prompts": {},
+  "sessions": {
+    "s_3334d6f33a9904": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a130fa-1aa1-7fe1-81dd-b1a54e13669e",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
