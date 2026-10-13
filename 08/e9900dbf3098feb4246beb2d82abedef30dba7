@@ -1,0 +1,75 @@
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_3870c10f2b3975::t_e9e674ee265555 4202-4206,4296
+  s_3870c10f2b3975::t_f2b1266b7606a4 1279,4138-4139,4141,4198-4201,4207-4211,4233-4236,4377-4384,4519-4521,4532-4537,4539-4548,4550-4559,4605,4672-4680,4687-4693,4699-4707
+  s_3870c10f2b3975::t_63d6ea340c2018 4371
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_3870c10f2b3975::t_7de37e884766ac 262-264,274-275,370,373-375,378
+  s_3870c10f2b3975::t_8c3e04cb8fa855 444-446,466,470,498-500
+  s_3870c10f2b3975::t_fedc1913782a40 428-431,467-469
+  s_3870c10f2b3975::t_70464238a7cde9 447
+  s_3870c10f2b3975::t_871b1653a8f809 451,453-460,478-485
+  s_3870c10f2b3975::t_1c7ff5d9cbd6f6 461-465,471-477
+  s_3870c10f2b3975::t_4bd04fe4a38ac1 8,16,181-182,347,421-427,432-443,448-450,452,486-497,501-509,546-549,565-566
+tests/test_plugin_rime_realtime.py
+  s_3870c10f2b3975::t_185a9019b967b2 187,193
+  s_3870c10f2b3975::t_b1a29af234ff06 1,3,13-18,20,26-34,38-65,67-68,70-73,75-77,80,82,84-109,111-112,115-120,123-124,126-134,136-137,139-143,154,156-167,169-176,178-186,188-192,194-205,207-271,273-275,278-279,281-304,306-313,316-327,330-349,383-384,387-391,393-398,414-416,418-425,427-434,436-465,468-526,528-557,559-561
+  s_7df8c771227209::t_de1555aa297b0a 2,4-12,19,21-25,113,121-122,125,135,138,144-147,149-153,155,168,272,276-277,280,314-315,328-329,350,385-386,426,466-467,558
+  s_3870c10f2b3975::t_db8d114ffcbf6e 627-633
+  s_3870c10f2b3975::t_c9d9e954ae9002 351-366,368-371,373-380
+  s_3870c10f2b3975::t_ed54f2adc63a76 35-37,78-79
+  s_3870c10f2b3975::t_9b826f303cad5d 562-585,587-609,617-626,634-647
+  s_3870c10f2b3975::t_5454492c6b36bf 367,610-616
+livekit-agents/livekit/agents/llm/realtime.py
+  s_3870c10f2b3975::t_e9e674ee265555 7,18,48-52,309-364
+  s_3870c10f2b3975::t_1135d1538a4632 365
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_3870c10f2b3975::t_db8d114ffcbf6e 370,377-383,387,565
+  s_3870c10f2b3975::t_eb04bf93c07065 107,372-373,384-386,388,564,568-569,591-594,617-618
+  s_3870c10f2b3975::t_988be7d9e36ff8 1-36,39-69,73,75-106,108-183,187-369,371,374-376,389-563,566-567,570-590,595-616,619-731,736-747
+  s_3870c10f2b3975::t_4c60f5e956a7ad 37-38
+  s_3870c10f2b3975::t_2fec2a3635c8ae 70-72,74
+  s_3870c10f2b3975::t_9a720db113aec1 184-186,732-735
+livekit-plugins/livekit-plugins-rime/README.md
+  s_3870c10f2b3975::t_af587e75a7b89a 121-131,134-135,137-183,191,200-202
+  s_3870c10f2b3975::t_ea257bffbd7ba8 184-190,192-199
+tests/test_realtime_fallback_hooks.py
+  s_3870c10f2b3975::t_7d5b3d482e5f1b 8,111-152,260-261
+  s_3870c10f2b3975::t_03471e64753310 29,53,251
+  s_3870c10f2b3975::t_dddd9b15a32bff 1-7,9-28,30-52,54-110,153-250,252-259,262-377
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/__init__.py
+  s_3870c10f2b3975::t_18bd5e8adc4339 20-24,28,48-60
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_3870c10f2b3975::t_f54ef1013907a2 25,27
+tests/test_plugin_rime_fallback.py
+  s_3870c10f2b3975::t_337fa5de9f818b 1-23,25-33
+tests/test_plugin_rime_tts.py
+  s_3870c10f2b3975::t_2ca2a5c8564737 2712-2713
+tests/test_realtime_unused_audio.py
+  s_3870c10f2b3975::t_e2cd4cab127c7d 1-69
+uv.lock
+  s_3870c10f2b3975::t_6c17af6560f444 3605-3609,3617,5803,5807,5809-5812,5814-5815,5817-5818,5819,5821
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08e9900dbf3098feb4246beb2d82abedef30dba7",
+  "prompts": {},
+  "sessions": {
+    "s_3870c10f2b3975": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d52-139f-72c3-a9e5-78842014261b",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    },
+    "s_7df8c771227209": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a103bc-e2b0-72b2-9eec-d11fdebf3c7e",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
