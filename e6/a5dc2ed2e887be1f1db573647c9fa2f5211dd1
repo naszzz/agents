@@ -1,0 +1,23 @@
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_51a23137fa4393::t_4b19e5142167fc 4703-4705,4710
+livekit-agents/livekit/agents/llm/realtime.py
+  s_51a23137fa4393::t_4b19e5142167fc 349-350
+tests/test_plugin_rime_realtime.py
+  s_51a23137fa4393::t_f038c84479e332 217-246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e6a5dc2ed2e887be1f1db573647c9fa2f5211dd1",
+  "prompts": {},
+  "sessions": {
+    "s_51a23137fa4393": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13b65-e19f-7f71-9669-29def00f6c37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
