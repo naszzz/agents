@@ -1,0 +1,31 @@
+tests/test_plugin_rime_audio.py
+  s_51a23137fa4393::t_a22b57f71f25e7 41-109
+  s_51a23137fa4393::t_bfebf6d9276b46 9,21-38
+  s_51a23137fa4393::t_9343088be5de48 39-40
+tests/test_plugin_rime_realtime.py
+  s_51a23137fa4393::t_1246066a3e7a5d 199-210,214-215,217-221
+  s_51a23137fa4393::t_a2ef2f787f3fcf 16,211-213,216
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_51a23137fa4393::t_cb9909c817ae30 315-316
+  s_51a23137fa4393::t_182abe67ad73c7 20,139-140,300,307-314,317-343,360-361
+  s_51a23137fa4393::t_e07a07028f51cf 246-247,269,275-280,287,294-295,301-302
+  s_51a23137fa4393::t_02398963f22e0a 243-245,286,288-290,296-299
+  s_51a23137fa4393::t_a190389b90dd8e 291-293
+  s_51a23137fa4393::t_bbd745ba5fa49a 303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "83fa69470bf45fd67549b2938c9f09121fb16b2b",
+  "prompts": {},
+  "sessions": {
+    "s_51a23137fa4393": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13b65-e19f-7f71-9669-29def00f6c37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_51a23137fa4393::t_880eef2fff0949 447-450
+  s_51a23137fa4393::t_f671f21ee8d4ca 352-359,418-446,451-462,464-483,493-505
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a680d48f063bedf4ab5564f5d4cc372a2a3b71fa",
+  "prompts": {},
+  "sessions": {
+    "s_51a23137fa4393": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13b65-e19f-7f71-9669-29def00f6c37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

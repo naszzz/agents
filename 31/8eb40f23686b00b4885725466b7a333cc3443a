@@ -1,0 +1,19 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_bf5da574232ae5::t_21ba91fd30b1f7 159-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "318eb40f23686b00b4885725466b7a333cc3443a",
+  "prompts": {},
+  "sessions": {
+    "s_bf5da574232ae5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a137bf-362d-7223-ad36-895daba240a7",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_1eafd771c474de::t_f1d1c2ad657d73 4365-4368,4705-4710,4712-4714,4716-4724,4727-4734
+  s_1eafd771c474de::t_67362efebb372d 4634-4635,4638,4647-4657,4659
+  s_1eafd771c474de::t_e825c3d25d2bcf 4725
+  s_1eafd771c474de::t_e18519e2403be0 4660,4735-4740
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_1eafd771c474de::t_f1d1c2ad657d73 346-351,353-354,438-439,443
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_1eafd771c474de::t_e825c3d25d2bcf 463-464,475-476
+  s_1eafd771c474de::t_f1d1c2ad657d73 198-199,290-294,439-462,465-474,477-507
+tests/test_plugin_rime_fallback.py
+  s_1eafd771c474de::t_4fc6a681149cf0 34-56
+tests/test_plugin_rime_realtime.py
+  s_1eafd771c474de::t_0cf1804df6bba7 648-734
+tests/test_realtime_fallback_hooks.py
+  s_1eafd771c474de::t_cc5f630a6b7da5 378-446
+tests/test_realtime_unused_audio.py
+  s_1eafd771c474de::t_4f9429e1987643 70-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e0008848e723d898f087f2915d5533f7f59167b",
+  "prompts": {},
+  "sessions": {
+    "s_1eafd771c474de": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13751-0ed9-7e72-a652-119778e45b06",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
