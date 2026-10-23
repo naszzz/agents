@@ -3,6 +3,7 @@ livekit-agents/livekit/agents/voice/agent_activity.py
   s_3870c10f2b3975::t_f2b1266b7606a4 1296,4228-4229,4289-4292,4298-4302,4324-4327,4468-4475,4610-4612,4623-4628,4630-4639,4641-4650,4699,4760-4768,4775-4781,4787-4795
   s_3870c10f2b3975::t_63d6ea340c2018 4462
   s_1eafd771c474de::t_ff0635bd1a09da 4640
+  s_8f61c5c8d5d729::t_f8c33674f9d2b1 4232
 livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
   s_3870c10f2b3975::t_7de37e884766ac 262-264,274-275,370,373-375,378
   s_3870c10f2b3975::t_8c3e04cb8fa855 444-446,466,470,498-500
@@ -47,6 +48,7 @@ livekit-plugins/livekit-plugins-rime/pyproject.toml
   s_1eafd771c474de::t_ff0635bd1a09da 26
 tests/test_plugin_rime_fallback.py
   s_3870c10f2b3975::t_337fa5de9f818b 1-23,25-33
+  s_8f61c5c8d5d729::t_234708541fbe11 24
 tests/test_plugin_rime_tts.py
   s_3870c10f2b3975::t_2ca2a5c8564737 2716-2717
   s_1eafd771c474de::t_c08ec82b2b4cc4 1176-1178
@@ -82,6 +84,14 @@ uv.lock
         "tool": "codex",
         "id": "01a103bc-e2b0-72b2-9eec-d11fdebf3c7e",
         "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    },
+    "s_8f61c5c8d5d729": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1699d-cabf-7442-8667-6be0f7f7ca19",
+        "model": "gpt-6.1-sol"
       },
       "human_author": "naszzz <naszagorov@gmail.com>"
     }
