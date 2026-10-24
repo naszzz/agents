@@ -1,0 +1,53 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_8f61c5c8d5d729::t_68c80e0951a1ab 262-263,265-266,268-270,273-274
+tests/test_plugin_rime_limits.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 44,72
+tests/test_plugin_rime_history.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 50,67,112,145,163,191,206,221,245,309,321,332,369,426,440
+tests/test_plugin_rime_background.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 39,54,76
+tests/test_realtime_history_updates.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 70
+tests/test_plugin_rime_playback.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 84,102,122,138,154,170,192,206,237,271
+tests/test_plugin_rime_audio.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 25,44,64,90,113
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_8f61c5c8d5d729::t_8a7a93df85bf63 396,472
+tests/test_realtime_fallback_hooks.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 31,39,42,92,122,124-125,162,201,244,274,311,398,423,426,437
+  s_8f61c5c8d5d729::t_e817034361dc84 402-404
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_8f61c5c8d5d729::t_8a7a93df85bf63 1318
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_8f61c5c8d5d729::t_8a7a93df85bf63 41,43-70,221,343,989,1056,1187,1193
+tests/test_plugin_rime_fallback.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 76
+tests/test_plugin_rime_realtime.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 307,320,451,507,515,524,546,581,687,734,748,768,808,840,862,966
+  s_8f61c5c8d5d729::t_e817034361dc84 284-286
+tests/test_plugin_rime_typed.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 32,49,68,86,114,136,156,170
+tests/test_plugin_rime_settings.py
+  s_8f61c5c8d5d729::t_9038ebfc3bd9b2 53,68-69,85,94,115,226,247,391
+  s_8f61c5c8d5d729::t_db0a423fc907a4 19-24,277,279,290-291,293-318,379-381,384-385,387,389,397-398,400-418,422
+  s_8f61c5c8d5d729::t_f712aa209e32b5 399,420
+livekit-agents/livekit/agents/llm/realtime.py
+  s_8f61c5c8d5d729::t_8a7a93df85bf63 9,120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "466bd1380ce93ba8666a52fe9ac7fa5ee26d7b77",
+  "prompts": {},
+  "sessions": {
+    "s_8f61c5c8d5d729": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1699d-cabf-7442-8667-6be0f7f7ca19",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
