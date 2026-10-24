@@ -1,0 +1,43 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_8f61c5c8d5d729::t_bb9a2c9727aa8f 30,319-323,421-428
+  s_8f61c5c8d5d729::t_5e054ef4485a06 73,94,103,129,139,142-147,237-239,288,293-294,317-318,324-326,334-335,355-356,359-361,386,393,405,432,452,465-475,491,494-500,502-506,508-520,522-523,525-539,629-642,826-829
+  s_8f61c5c8d5d729::t_93bfbe55dcc4cc 28-29,346,431,433,453
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_history.py
+  s_8f61c5c8d5d729::t_bb9a2c9727aa8f 115-117,120-122,137-139,146-148,155-156,169-171,173,177-179,194-196,228-232,247-249,256
+  s_8f61c5c8d5d729::t_0da44f3d36974d 1-6,8-25,29-30,32-37,39-52,60-86,88-94,96-105,107-114,118-119,123-136,140-145,149-154,159-168,172,174-176,180-191,197-227,233-246,250-255,257-263
+  s_8f61c5c8d5d729::t_fbe9efa266caab 7,26-28,31,38,53-59,87,95,106,157-158,192-193
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_8f61c5c8d5d729::t_bb9a2c9727aa8f 811,815-844
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_8f61c5c8d5d729::t_bb9a2c9727aa8f 333-339,341,593-614
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_8f61c5c8d5d729::t_5e054ef4485a06 26
+examples/voice_agents/rime_prism.py
+  s_8f61c5c8d5d729::t_16782d9886c7bb 39-40
+livekit-plugins/livekit-plugins-rime/README.md
+  s_8f61c5c8d5d729::t_8bb438970134b6 137,172-174,197-198,201-248,273-274,299-300
+tests/test_plugin_rime_history.py
+  s_8f61c5c8d5d729::t_13a61b5de271bb 1-362
+tests/test_plugin_rime_realtime.py
+  s_8f61c5c8d5d729::t_03d1031ab3281f 42-49,56-81,88-89,130-171,173,175,213-223,310,317-318,327
+tests/test_realtime_history_updates.py
+  s_8f61c5c8d5d729::t_072005f584dcc9 1-146
+uv.lock
+  s_8f61c5c8d5d729::t_45fe8e3bd9e35e 3625,5847,5856,5858
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b7f705b94a0320308795ade6e7fff86c0e641cfc",
+  "prompts": {},
+  "sessions": {
+    "s_8f61c5c8d5d729": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1699d-cabf-7442-8667-6be0f7f7ca19",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
