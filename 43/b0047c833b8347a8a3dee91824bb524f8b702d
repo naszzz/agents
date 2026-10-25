@@ -1,0 +1,103 @@
+tests/fake_rime_realtime.py
+  s_5911e830bd94ce::t_d6a03017c4f305 1-7,12-30,36-56
+  s_5911e830bd94ce::t_0a42360d906513 8-11,31-35
+tests/test_plugin_rime_settings.py
+  s_5911e830bd94ce::t_634a7923312d1b 114,295,384,386
+  s_5911e830bd94ce::t_55e1dc5d14acdc 17,20,25
+  s_5911e830bd94ce::t_1943082e696edf 18,323,325
+tests/test_plugin_rime_fallback.py
+  s_5911e830bd94ce::t_55e1dc5d14acdc 8
+  s_5911e830bd94ce::t_634a7923312d1b 7,18,41,72
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_session.py
+  s_5911e830bd94ce::t_018b61be3d32b7 7,19,21-22,35
+  s_5911e830bd94ce::t_21d8f070887bb8 1-2,4-6,9,11-15,17-18,20,23-34,36-127
+  s_5911e830bd94ce::t_55e1dc5d14acdc 3,8,10,16
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_types.py
+  s_5911e830bd94ce::t_018b61be3d32b7 7,100-103,111,116-120
+  s_5911e830bd94ce::t_55e1dc5d14acdc 3,27-29,95-97
+  s_5911e830bd94ce::t_21d8f070887bb8 1-2,4-6,8-26,30-94,98-99,104-110,112-115
+tests/test_plugin_rime_speech_hints.py
+  s_5911e830bd94ce::t_0a42360d906513 11,15
+  s_5911e830bd94ce::t_55e1dc5d14acdc 9-10,12,20,22,27,72,95,101,112
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_5911e830bd94ce::t_21d8f070887bb8 33,37-38,58,244,976,993
+  s_5911e830bd94ce::t_55e1dc5d14acdc 30,32,34-36
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_5911e830bd94ce::t_634a7923312d1b 807,809-810,813-816,1132-1142,2258,2267,4230-4232,4289,4300,4316,4322,4444,4450,4585-4586,4597-4604,4606,4651,4653-4655,4657-4662,4664-4665,4727-4734
+livekit-agents/livekit/agents/voice/room_io/_output.py
+  s_5911e830bd94ce::t_634a7923312d1b 50,316
+livekit-agents/livekit/agents/cli/_legacy.py
+  s_5911e830bd94ce::t_634a7923312d1b 157,295-298,306
+tests/test_plugin_rime_unused_audio.py
+  s_5911e830bd94ce::t_0a42360d906513 9,13
+  s_5911e830bd94ce::t_55e1dc5d14acdc 8,10,44,124
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_fallback.py
+  s_5911e830bd94ce::t_55e1dc5d14acdc 15-17,22-25,27-31,33,97-103,574-575,606-607
+  s_5911e830bd94ce::t_21d8f070887bb8 1-13,19-21,26,32,34-96,104-138,140-198,200-234,236-242,244-537,539-541,552-553,559-571,573,576-584,586-605,608-696,698-715,717-742
+  s_5911e830bd94ce::t_cdc541221a04bb 572
+  s_5911e830bd94ce::t_9896394bead828 542-551
+  s_5911e830bd94ce::t_018b61be3d32b7 14,18,139,199,235,243,538,554-558,585,697,716
+tests/test_plugin_rime_playback.py
+  s_5911e830bd94ce::t_634a7923312d1b 14
+  s_5911e830bd94ce::t_55e1dc5d14acdc 15
+tests/test_plugin_rime_tts.py
+  s_5911e830bd94ce::t_707a6ecc70acd3 2768-2769
+livekit-agents/livekit/agents/llm/realtime.py
+  s_5911e830bd94ce::t_634a7923312d1b 7,18,24
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_5911e830bd94ce::t_f1a586272a40ee 23
+tests/test_plugin_rime_realtime.py
+  s_5911e830bd94ce::t_634a7923312d1b 19,346,385
+  s_5911e830bd94ce::t_55e1dc5d14acdc 21-25
+livekit-agents/livekit/agents/cli/tcp_console.py
+  s_5911e830bd94ce::t_634a7923312d1b 76,108
+tests/test_plugin_rime_fallback_hooks.py
+  s_5911e830bd94ce::t_55e1dc5d14acdc 16-18
+  s_5911e830bd94ce::t_0a42360d906513 15,20
+livekit-plugins/livekit-plugins-rime/README.md
+  s_5911e830bd94ce::t_a1593f57549358 145,153,164-177,180-183,195
+  s_5911e830bd94ce::t_f1a586272a40ee 178-179
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_5911e830bd94ce::t_634a7923312d1b 8,16,260,318-325,332-355,363-369,374-384,412-413,416-419,422-423,447-448,464
+tests/test_plugin_rime_config_recovery.py
+  s_5911e830bd94ce::t_0a42360d906513 11-12,15
+  s_5911e830bd94ce::t_55e1dc5d14acdc 9,13,90,165
+tests/test_plugin_rime_session.py
+  s_5911e830bd94ce::t_edda125b4b5399 1-60
+examples/voice_agents/rime_prism.py
+  s_5911e830bd94ce::t_a1593f57549358 8,43
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_io.py
+  s_5911e830bd94ce::t_018b61be3d32b7 33,58
+  s_5911e830bd94ce::t_2993026faddbd9 1-26,28-30,32,34-57,60-90
+  s_5911e830bd94ce::t_aecfcea7773369 27,31,59
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_activity.py
+  s_5911e830bd94ce::t_9896394bead828 28
+  s_5911e830bd94ce::t_018b61be3d32b7 17-18,43,50,52,55-56,110-111,113,127-130,165,226-232,318,682
+  s_5911e830bd94ce::t_55e1dc5d14acdc 7,21,24,26,29-30,34-41,46,48,126,131,205-207,444-445,643-644,966-967,981-982,994-995
+  s_5911e830bd94ce::t_4820f57ec9a8f2 61-63
+  s_5911e830bd94ce::t_cdc541221a04bb 137-138,140,144-146,148-157,159,216-217
+  s_5911e830bd94ce::t_b26d106aa80cad 189,192
+  s_5911e830bd94ce::t_21d8f070887bb8 1-6,8-16,19-20,22-23,25,27,31-33,42,44-45,47,49,51,53-54,57-60,64-109,112,114-125,132-136,139,141-143,147,158,160-164,166-188,190-191,193-204,208-215,218-225,233-317,319-443,446-642,645-681,683-965,968-980,983-993,996-1241
+tests/test_plugin_rime_history_updates.py
+  s_5911e830bd94ce::t_0a42360d906513 10-11,14
+  s_5911e830bd94ce::t_55e1dc5d14acdc 9,12,27,52,70,141
+tests/test_plugin_rime_history.py
+  s_5911e830bd94ce::t_634a7923312d1b 15,47,142,402
+  s_5911e830bd94ce::t_55e1dc5d14acdc 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43b0047c833b8347a8a3dee91824bb524f8b702d",
+  "prompts": {},
+  "sessions": {
+    "s_5911e830bd94ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a170af-549d-7e30-82fd-bec4cd7bb3d6",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
