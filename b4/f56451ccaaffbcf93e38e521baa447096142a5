@@ -1,0 +1,28 @@
+tests/test_plugin_rime_fallback.py
+  s_75e89aa63c2daa::t_708c3e076243dd 7
+livekit-plugins/livekit-plugins-rime/README.md
+  s_75e89aa63c2daa::t_708c3e076243dd 242-243,260-265
+  s_75e89aa63c2daa::t_33807f8bc7a49a 266
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_75e89aa63c2daa::t_c6339202c4cf94 260,332-355,363-369,374-384,413,423
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_75e89aa63c2daa::t_fc137921a783d1 807,811-812
+tests/test_realtime_fallback.py
+  s_75e89aa63c2daa::t_c37f9d75abafc7 8,248,570,585
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4f56451ccaaffbcf93e38e521baa447096142a5",
+  "prompts": {},
+  "sessions": {
+    "s_75e89aa63c2daa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1718e-9617-79a3-bb2e-b12096bb8244",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
