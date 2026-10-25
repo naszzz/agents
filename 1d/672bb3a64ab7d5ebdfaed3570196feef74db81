@@ -1,0 +1,21 @@
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_75e89aa63c2daa::t_fe9b293ab42530 201,386-392,441
+tests/test_realtime_fallback.py
+  s_75e89aa63c2daa::t_9c05219b319cf2 700-748
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1d672bb3a64ab7d5ebdfaed3570196feef74db81",
+  "prompts": {},
+  "sessions": {
+    "s_75e89aa63c2daa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1718e-9617-79a3-bb2e-b12096bb8244",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
