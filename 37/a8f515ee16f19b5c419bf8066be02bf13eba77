@@ -1,0 +1,34 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_history.py
+  s_5911e830bd94ce::t_d59f4d0d6bc8ff 172,214-225
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_5911e830bd94ce::t_d59f4d0d6bc8ff 72-77,79-80,892-894
+  s_5911e830bd94ce::t_dd44b370dc7fcb 78
+livekit-plugins/livekit-plugins-rime/README.md
+  s_5911e830bd94ce::t_0a6df047f8c7e1 136,179,301-312
+  s_5911e830bd94ce::t_2b6f04298debae 313
+tests/test_plugin_rime_truncation.py
+  s_5911e830bd94ce::t_0a6df047f8c7e1 1-141,145-165,169-197,201-204
+  s_5911e830bd94ce::t_dc812b5e78966e 142-144,166-168,198-200
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_5911e830bd94ce::t_107301fcf5a079 26
+scripts/test_rime_compatibility.py
+  s_5911e830bd94ce::t_7c8b77e5a70acc 6
+uv.lock
+  s_5911e830bd94ce::t_fecd987dc0aadd 3640,5862,5871,5873
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "37a8f515ee16f19b5c419bf8066be02bf13eba77",
+  "prompts": {},
+  "sessions": {
+    "s_5911e830bd94ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a170af-549d-7e30-82fd-bec4cd7bb3d6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

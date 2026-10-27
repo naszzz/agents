@@ -1,0 +1,23 @@
+tests/test_plugin_rime_truncation.py
+  s_5911e830bd94ce::t_48146a49a0e580 77-88,90-112
+  s_5911e830bd94ce::t_3d38e5760879ff 89
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_5911e830bd94ce::t_dac3471d8b77dd 198,895-897,899,901,918-920,923
+  s_5911e830bd94ce::t_8245e0cd13c5f0 898,900
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c74549a84a03cb3e0daff47893e3e1694d415d0d",
+  "prompts": {},
+  "sessions": {
+    "s_5911e830bd94ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a170af-549d-7e30-82fd-bec4cd7bb3d6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

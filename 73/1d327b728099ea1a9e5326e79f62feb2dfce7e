@@ -1,0 +1,31 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_75e89aa63c2daa::t_62d9b009b0a80b 220-222
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_75e89aa63c2daa::t_8602e9c4e7af98 814-817,819-821,823,826-827,829-835
+tests/test_realtime_chat_ctx_concurrency.py
+  s_75e89aa63c2daa::t_bce5166f1c3b66 246-304
+tests/test_plugin_rime_audio.py
+  s_75e89aa63c2daa::t_c29a71c2c3dde6 52-66
+  s_75e89aa63c2daa::t_1c54d010cd27c6 21-51
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_75e89aa63c2daa::t_dd1c6adbbe57eb 286-290
+  s_75e89aa63c2daa::t_e70602bc1e045d 268,461-462,518-519,524-527
+tests/test_plugin_rime_settings.py
+  s_75e89aa63c2daa::t_62d9b009b0a80b 106-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "731d327b728099ea1a9e5326e79f62feb2dfce7e",
+  "prompts": {},
+  "sessions": {
+    "s_75e89aa63c2daa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1718e-9617-79a3-bb2e-b12096bb8244",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

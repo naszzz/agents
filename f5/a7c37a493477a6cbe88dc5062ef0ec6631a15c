@@ -1,0 +1,22 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_activity.py
+  s_5911e830bd94ce::t_9e89a82557fd2c 105-112
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_fallback.py
+  s_5911e830bd94ce::t_4ecfa0c7cd3924 7-8,12,21-26,89,120,132,138-139,144,147-148,153-159,181,184
+  s_5911e830bd94ce::t_9c95b90ccfaac7 149-152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f5a7c37a493477a6cbe88dc5062ef0ec6631a15c",
+  "prompts": {},
+  "sessions": {
+    "s_5911e830bd94ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a170af-549d-7e30-82fd-bec4cd7bb3d6",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

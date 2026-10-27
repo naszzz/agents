@@ -1,0 +1,25 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_51a23137fa4393::t_7f9ada26b9ccd5 150
+tests/test_plugin_rime_realtime.py
+  s_51a23137fa4393::t_7f9ada26b9ccd5 20-21,160
+tests/test_plugin_rime_imports.py
+  s_51a23137fa4393::t_125bb87374a602 1-74
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/__init__.py
+  s_51a23137fa4393::t_7f9ada26b9ccd5 20-22,25,30,52-53,55,61-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b3dd64f64344cabc3d33b9a13ed0aba250a45e52",
+  "prompts": {},
+  "sessions": {
+    "s_51a23137fa4393": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13b65-e19f-7f71-9669-29def00f6c37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
