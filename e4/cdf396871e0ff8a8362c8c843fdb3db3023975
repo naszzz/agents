@@ -6,6 +6,7 @@ tests/test_plugin_rime_imports.py
   s_51a23137fa4393::t_125bb87374a602 1-74
 livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/__init__.py
   s_51a23137fa4393::t_7f9ada26b9ccd5 20-22,25,53-54,56,62-63
+  s_c916574ca0e4e3::t_c969050f7b0468 31
 ---
 {
   "schema_version": "authorship/3.0.0",
@@ -17,6 +18,14 @@ livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/__init__.py
       "agent_id": {
         "tool": "codex",
         "id": "01a13b65-e19f-7f71-9669-29def00f6c37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    },
+    "s_c916574ca0e4e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1890b-a39d-7fb0-a74a-12cec57fbb7d",
         "model": "gpt-6-astra"
       },
       "human_author": "naszzz <naszagorov@gmail.com>"
