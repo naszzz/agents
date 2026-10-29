@@ -1,0 +1,19 @@
+uv.lock
+  s_8e934c3267144b::t_4021eadc04ba23 5863,5872,5874
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0659647e4f2b56cf4166459e05dd74e5c63ee02",
+  "prompts": {},
+  "sessions": {
+    "s_8e934c3267144b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a155e9-7d8e-7232-918d-a99da4bb35cc",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

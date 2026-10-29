@@ -1,0 +1,27 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/_history.py
+  s_c916574ca0e4e3::t_399275b10c08a2 81,283-296,298,359,377,379,386
+  s_c916574ca0e4e3::t_58faa2cd97f413 82-83
+tests/test_plugin_rime.py
+  s_c916574ca0e4e3::t_3717e0e073d9b9 3619,3665-3668,3679-3683
+  s_c916574ca0e4e3::t_7c223d3e24e770 3061,3111,3182-3187
+  s_c916574ca0e4e3::t_7225830f31e9c0 3181,3188-3196
+  s_c916574ca0e4e3::t_791f8854a1ccdd 3559-3618,3620-3664,3669-3678,3684-3692
+livekit-plugins/livekit-plugins-rime/README.md
+  s_c916574ca0e4e3::t_c4dc5d0c756d31 266-269,273-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a6397c9e6f626478ec89e11794e8a1865944e2a7",
+  "prompts": {},
+  "sessions": {
+    "s_c916574ca0e4e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1890b-a39d-7fb0-a74a-12cec57fbb7d",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

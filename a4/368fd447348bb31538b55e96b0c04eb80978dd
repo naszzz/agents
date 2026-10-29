@@ -1,0 +1,46 @@
+livekit-agents/livekit/agents/llm/realtime_fallback_adapter.py
+  s_75e89aa63c2daa::t_9c423910e07ef0 201-202,288-290,348-354,359,373-440,442-461
+  s_75e89aa63c2daa::t_03e45063a69d33 262-264,272-273,441
+  s_75e89aa63c2daa::t_a56d0deafdd939 462
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_75e89aa63c2daa::t_a6935cc9070ddb 998-999
+  s_75e89aa63c2daa::t_560d192c32310e 48,73,203,206,235-237,242,254,271,273-274,281,286,297,300,329-331,399,401-403,407,415-416,502-503,529,532-540,547,550-551,554-564,569-598,600,609,638,649-650,652-653,656-658,660,670,672-673,675,681-685,687,690-693,706,736,744,810,812,832-833,862,889-892
+  s_75e89aa63c2daa::t_0a8634d97fceba 238,340-344,565-568,639-642,803-807
+livekit-agents/livekit/agents/voice/agent_activity.py
+  s_75e89aa63c2daa::t_560d192c32310e 811-826
+  s_75e89aa63c2daa::t_68d2dd93bcffd7 810,827-836,841
+examples/voice_agents/rime_prism.py
+  s_75e89aa63c2daa::t_90e0de9c3458df 8,43
+livekit-plugins/livekit-plugins-rime/README.md
+  s_75e89aa63c2daa::t_a43796f6dc6edb 129-130,136,143,150,156-160,162-164,167-173,176-278
+tests/test_plugin_rime_background.py
+  s_75e89aa63c2daa::t_e8cb7613663355 45
+tests/test_plugin_rime_fallback.py
+  s_75e89aa63c2daa::t_d29d99dff7f571 7-8,25-26,31,34,52,86-88,91
+tests/test_plugin_rime_history.py
+  s_75e89aa63c2daa::t_44c71c2dca3a12 15-17,68,216,246-249,254,256-257,296,307
+tests/test_plugin_rime_realtime.py
+  s_75e89aa63c2daa::t_06d5fd6a465146 19-20,215,271-272,408,424,433,517-518,520-605,607-697
+tests/test_plugin_rime_settings.py
+  s_75e89aa63c2daa::t_85683c1fd0c82c 15-16,62,67,69,71,120-123
+tests/test_realtime_chat_ctx_concurrency.py
+  s_75e89aa63c2daa::t_19e6436394f00e 154-245
+tests/test_realtime_fallback.py
+  s_75e89aa63c2daa::t_7c3d590485caec 248,570,585,657-699
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4368fd447348bb31538b55e96b0c04eb80978dd",
+  "prompts": {},
+  "sessions": {
+    "s_75e89aa63c2daa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1718e-9617-79a3-bb2e-b12096bb8244",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

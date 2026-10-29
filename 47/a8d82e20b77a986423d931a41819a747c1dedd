@@ -1,0 +1,27 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_8f61c5c8d5d729::t_380b7cfd9dd4cd 266-272
+  s_8f61c5c8d5d729::t_b5f5317dffb26b 194,209-212,751-757,800,802-822,824-826,828-877,880-898,900-901,903,1058-1059,1064-1065,1148-1149
+tests/test_plugin_rime_history.py
+  s_8f61c5c8d5d729::t_2f0c885f8f6e42 423-424,435-457
+  s_8f61c5c8d5d729::t_a8fb38dcb54407 420-422,425-434
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/_realtime_history.py
+  s_8f61c5c8d5d729::t_2bc7ed97ace2de 12,245-247
+tests/test_plugin_rime_playback.py
+  s_8f61c5c8d5d729::t_f2badecee8f4e2 1-292
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47a8d82e20b77a986423d931a41819a747c1dedd",
+  "prompts": {},
+  "sessions": {
+    "s_8f61c5c8d5d729": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1699d-cabf-7442-8667-6be0f7f7ca19",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

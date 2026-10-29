@@ -1,0 +1,23 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime.py
+  s_5911e830bd94ce::t_fc17713882adf3 679,681-682
+tests/test_plugin_rime_typed.py
+  s_5911e830bd94ce::t_fc17713882adf3 16,29-33,37-40,42
+  s_5911e830bd94ce::t_8b7d1386a44489 34-36,41,43-47
+  s_5911e830bd94ce::t_4c8372c61c3110 48-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48c7c111391b138c71274dd92e5afb094194a984",
+  "prompts": {},
+  "sessions": {
+    "s_5911e830bd94ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a170af-549d-7e30-82fd-bec4cd7bb3d6",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
