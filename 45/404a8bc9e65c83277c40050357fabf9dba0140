@@ -43,6 +43,7 @@ tests/test_realtime_fallback_hooks.py
   s_3870c10f2b3975::t_dddd9b15a32bff 1-7,9-28,30-52,54-110,153-250,252-259,262-377
 livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/__init__.py
   s_3870c10f2b3975::t_18bd5e8adc4339 20-24,49-61
+  s_c916574ca0e4e3::t_934aa01a8e0ae2 29
 livekit-plugins/livekit-plugins-rime/pyproject.toml
   s_3870c10f2b3975::t_f54ef1013907a2 25,27
   s_1eafd771c474de::t_ff0635bd1a09da 26
@@ -91,6 +92,14 @@ uv.lock
         "tool": "codex",
         "id": "01a1699d-cabf-7442-8667-6be0f7f7ca19",
         "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    },
+    "s_c916574ca0e4e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1890b-a39d-7fb0-a74a-12cec57fbb7d",
+        "model": "gpt-6-astra"
       },
       "human_author": "naszzz <naszagorov@gmail.com>"
     }
