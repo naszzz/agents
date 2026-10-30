@@ -1,0 +1,90 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_abe32fc5b8c5b7::t_fbf8f28b94bbbb 159-163,401
+  s_abe32fc5b8c5b7::t_9a6677a1f1c175 215-231,303,342,754
+  s_03edeeb9b0e0a4::t_b9086de4672a70 15,17,32,40,42-58,103-105,137-145,164-214,355,395-400,402,589-600,605-643,645,753,755,769-773,788-789,868-871,916-919,940,1011-1012,1065-1068,1098-1099,1102-1106,1108-1110,1122-1129,1167-1171,1245-1248
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/_playback.py
+  s_abe32fc5b8c5b7::t_6cf37a6e338949 7,353
+  s_abe32fc5b8c5b7::t_01e16bf9a2451b 119-122
+  s_abe32fc5b8c5b7::t_a38aaaf4b6d0e3 252
+  s_abe32fc5b8c5b7::t_1dd0a3959684aa 57-64,72
+  s_abe32fc5b8c5b7::t_28c3528496dde0 31-37,69,73,97-115,124-251,253-336,355-356,369-371
+  s_abe32fc5b8c5b7::t_2ef8d03b952de5 1-6,8-30,38-56,65-68,70-71,74-96,116-118,123,337-352,354,357-368,372-381
+tests/test_plugin_rime_playback_lifetime.py
+  s_abe32fc5b8c5b7::t_b4f9ddf4447c6b 1-39,41-49,51-82,84-86,88-91,93-105
+  s_abe32fc5b8c5b7::t_9fa6edc7567a6c 40,50,83,87,92
+tests/test_plugin_rime.py
+  s_abe32fc5b8c5b7::t_e26b257efa3ea0 3760,3765,3777-3788,3790-3791,3798-3812,3894,3960,5421
+  s_abe32fc5b8c5b7::t_ee5feb3e27ff0d 3063,3219
+  s_abe32fc5b8c5b7::t_65eb8fbb5a35fb 3827,3834,3946,3965-3969,3971,3978,3981,3983-3986
+  s_abe32fc5b8c5b7::t_6769ff615625ee 3757-3759
+  s_abe32fc5b8c5b7::t_19b1d4291f665b 3761-3764
+  s_abe32fc5b8c5b7::t_565ccbd94858eb 3766-3768,3774-3776
+  s_abe32fc5b8c5b7::t_4185023f9b0482 3813-3815
+  s_abe32fc5b8c5b7::t_926c3cc49ebb3c 3824-3826
+  s_abe32fc5b8c5b7::t_23907ab568770e 3828-3833
+  s_abe32fc5b8c5b7::t_037533498fcab2 3835-3837
+  s_abe32fc5b8c5b7::t_491076fe6e8c7a 3891-3893
+  s_abe32fc5b8c5b7::t_2719894a410bd4 3895-3897
+  s_abe32fc5b8c5b7::t_66ab5935589d36 3961-3963
+  s_abe32fc5b8c5b7::t_5625a5968539b2 3982
+  s_abe32fc5b8c5b7::t_86425f42e11e0d 5418-5420
+  s_abe32fc5b8c5b7::t_1885d4ccd77df9 5422-5424
+  s_abe32fc5b8c5b7::t_eac6bbdc3ad06b 3659-3685,3690-3712,3719-3731,3733,3737-3738,3740-3756,3769-3773,3816-3819,3821,3823,3838-3848,3850-3864,3868-3878,3880-3881,3883-3890,3898-3907,5187-5202,5207-5227,5229,5234-5235,5238-5240,5242,5269-5289,5379-5380,5398-5412,5414-5417,5425-5440
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/_history.py
+  s_abe32fc5b8c5b7::t_b30641cf29c345 293,303,333,581,600
+  s_abe32fc5b8c5b7::t_f87d56941387cc 336,373,375,397-461,606
+  s_abe32fc5b8c5b7::t_1a00fa51d069cf 165-169,347-350,361,371,572
+  s_abe32fc5b8c5b7::t_e2c3438e89398d 162-164
+  s_abe32fc5b8c5b7::t_47430443f0fe4d 170-172
+  s_abe32fc5b8c5b7::t_c4b59fa3a0d8a7 334-335
+  s_abe32fc5b8c5b7::t_dd7d019fa369f6 344-346
+  s_abe32fc5b8c5b7::t_f49db80d090048 351-353,358-360
+  s_abe32fc5b8c5b7::t_29edf2a36d270c 362-364,368-370
+  s_abe32fc5b8c5b7::t_c934b3831b35ae 372
+  s_abe32fc5b8c5b7::t_872ee5501210da 374
+  s_abe32fc5b8c5b7::t_bc8591cf744dc5 376-378
+  s_abe32fc5b8c5b7::t_4c23dc5cc7a43b 394-396
+  s_abe32fc5b8c5b7::t_1ccf204b3980a8 462-464
+  s_abe32fc5b8c5b7::t_4df8f869c03df0 569-571
+  s_abe32fc5b8c5b7::t_d9597628d376e2 573-575,578-580
+  s_abe32fc5b8c5b7::t_72a4580930cc6a 582-584
+  s_abe32fc5b8c5b7::t_c89ab677e39666 597-599
+  s_abe32fc5b8c5b7::t_f5a279570ad29e 601-605
+  s_abe32fc5b8c5b7::t_50d7ac1f837d30 607-608
+  s_abe32fc5b8c5b7::t_05af57a6baee21 10-11,18-40,43-58,132-135,142-161,173-180,220-224,226-234,236,239,241-245,340-343,354-357,365-367,379,381-383,385-393,542,546,556-568,576-577,585-586,588-590,592-596
+scripts/test_rime_compatibility.py
+  s_abe32fc5b8c5b7::t_e89dcaa76647e7 76,98-102
+  s_abe32fc5b8c5b7::t_da72f5046ff9bb 103-107
+tests/test_plugin_rime_reliability.py
+  s_abe32fc5b8c5b7::t_ad158e061ed537 86,562-576,578-598,600-610,612-676,678-690,692-696,701-704,708,710,713-714,723,735-737,750,753-754,759,778-779,781
+  s_abe32fc5b8c5b7::t_e26b257efa3ea0 2-85,89-555,720-722
+  s_abe32fc5b8c5b7::t_c7c65ca47ed450 1,87-88,556-561,577,599,611,677,691,697-700,705-707,709,711-712,715-719,724-734,738-749,751-752,755-758,760-777,780,782-835
+livekit-plugins/livekit-plugins-rime/README.md
+  s_abe32fc5b8c5b7::t_4ca6ec51c00024 163,178,191-192,198-201,210-261,316-407,447-448
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/__init__.py
+  s_abe32fc5b8c5b7::t_f91132ef2bde46 1,11-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a958790bd415b1a0376246dcef78d80efc7d6811",
+  "prompts": {},
+  "sessions": {
+    "s_03edeeb9b0e0a4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18611-83f3-7261-8960-f0e7d135b2ae",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    },
+    "s_abe32fc5b8c5b7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18e47-da9e-7462-8cb0-76bb81b95c6b",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}

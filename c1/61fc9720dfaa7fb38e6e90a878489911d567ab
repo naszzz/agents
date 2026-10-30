@@ -1,0 +1,25 @@
+tests/test_plugin_rime_reliability.py
+  s_abe32fc5b8c5b7::t_f292a1b4e48ce0 563,662,674-675,680
+  s_abe32fc5b8c5b7::t_555ff9547f2e84 594-649,651-661,663-673,676-679,681-691,695-696
+  s_abe32fc5b8c5b7::t_50b425daadeab4 474-505,519-523,525-562,564-593
+  s_abe32fc5b8c5b7::t_ae504a135ed997 506-518,524,650
+  s_abe32fc5b8c5b7::t_9b56051099b486 692-694
+tests/test_plugin_rime.py
+  s_abe32fc5b8c5b7::t_075f853a0d74ab 3105-3108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c161fc9720dfaa7fb38e6e90a878489911d567ab",
+  "prompts": {},
+  "sessions": {
+    "s_abe32fc5b8c5b7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18e47-da9e-7462-8cb0-76bb81b95c6b",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
