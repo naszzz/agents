@@ -1,0 +1,25 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_c916574ca0e4e3::t_2c17d1b14f519d 136,179,296
+scripts/test_rime_compatibility.py
+  s_c916574ca0e4e3::t_2c17d1b14f519d 6
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_c916574ca0e4e3::t_2c17d1b14f519d 26
+uv.lock
+  s_c916574ca0e4e3::t_9150d554d03c91 3641,5863,5872,5874
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ca14724d609fa2949d490be5ae870133c5fa28b3",
+  "prompts": {},
+  "sessions": {
+    "s_c916574ca0e4e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1890b-a39d-7fb0-a74a-12cec57fbb7d",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
