@@ -1,0 +1,25 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_d77eaa9f55bc12::t_965b5b5e6527aa 636,638-640,758-769,771-776,788-817,1008,1103
+  s_d77eaa9f55bc12::t_650764efac15e9 770
+tests/test_plugin_rime_response_lifetime.py
+  s_d77eaa9f55bc12::t_fdbf5244dd65f1 1-12,14-74,79-181
+  s_d77eaa9f55bc12::t_9f63a1f2ec4b63 13,75-78
+scripts/test_rime_compatibility.py
+  s_d77eaa9f55bc12::t_fdbf5244dd65f1 112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d7c8c7e171f3765ecb8983f0c9ab89a7ba0236b6",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
