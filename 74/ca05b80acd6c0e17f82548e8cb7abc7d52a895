@@ -1,0 +1,37 @@
+.github/update_versions.py
+  s_d77eaa9f55bc12::t_069106c1aad50e 89
+  s_d77eaa9f55bc12::t_678e636e1a3662 1,83-84,87-88
+tests/test_release_versions.py
+  s_d77eaa9f55bc12::t_7198a511964a55 22-24,35
+  s_d77eaa9f55bc12::t_069106c1aad50e 1-21,25-34,36-68
+.github/workflows/rime-compatibility.yml
+  s_d77eaa9f55bc12::t_678e636e1a3662 9,19
+  s_d77eaa9f55bc12::t_069106c1aad50e 8,18
+  s_d77eaa9f55bc12::t_3d4efcfe38fe08 1-7,10-17,20-59
+scripts/test_rime_compatibility.py
+  s_d77eaa9f55bc12::t_3d4efcfe38fe08 12,15,77-81,86-89,91,100-109,111
+.github/release_rules.json
+  s_d77eaa9f55bc12::t_678e636e1a3662 1-3
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_d77eaa9f55bc12::t_3d4efcfe38fe08 23
+livekit-plugins/livekit-plugins-rime/README.md
+  s_d77eaa9f55bc12::t_069106c1aad50e 180-181
+  s_d77eaa9f55bc12::t_3d4efcfe38fe08 177-179,183-196,203,207-209,213-217
+  s_d77eaa9f55bc12::t_19ad99a773e906 182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "74ca05b80acd6c0e17f82548e8cb7abc7d52a895",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
