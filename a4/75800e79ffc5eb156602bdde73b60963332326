@@ -1,0 +1,36 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_d77eaa9f55bc12::t_4c98ccce649c93 100-101
+  s_d77eaa9f55bc12::t_3a00133a1d29d1 110
+  s_d77eaa9f55bc12::t_353cdf9e66d3b2 207,210
+tests/test_plugin_rime_context_mode.py
+  s_d77eaa9f55bc12::t_4c98ccce649c93 1-31,45,47,54-55,57-58,62-108,113
+  s_d77eaa9f55bc12::t_55772edec1b8df 48-50
+  s_d77eaa9f55bc12::t_fc2eab6d11acc0 51-53
+  s_d77eaa9f55bc12::t_8154fddfc429d7 109-112
+  s_d77eaa9f55bc12::t_353cdf9e66d3b2 32-44,46,56,59-61
+livekit-plugins/livekit-plugins-rime/README.md
+  s_d77eaa9f55bc12::t_3a00133a1d29d1 316-322,324,327,340-350
+  s_d77eaa9f55bc12::t_5b7c82bff53897 351
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/_history.py
+  s_d77eaa9f55bc12::t_353cdf9e66d3b2 161,163
+scripts/test_rime_compatibility.py
+  s_d77eaa9f55bc12::t_4c98ccce649c93 113
+tests/test_plugin_rime.py
+  s_d77eaa9f55bc12::t_502e3d86db7bd4 3722,3801,5111,5145,5213,5236,5276,5301,5359,5405,5451,5500,5606,5624
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a475800e79ffc5eb156602bdde73b60963332326",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
