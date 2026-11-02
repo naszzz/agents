@@ -1,0 +1,19 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_e2ebdd4570c888::t_9dd4b741804deb 417-424,474-481
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55dce3e5b81d3f51e5ddb393b9615b7c1111effb",
+  "prompts": {},
+  "sessions": {
+    "s_e2ebdd4570c888": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1990f-27a3-7cd2-93f8-b77fc1c6b8db",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
