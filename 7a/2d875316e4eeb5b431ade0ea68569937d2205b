@@ -1,0 +1,29 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_d77eaa9f55bc12::t_eab36652b1e564 49-54,914-916,918-922
+livekit-plugins/livekit-plugins-rime/README.md
+  s_d77eaa9f55bc12::t_eab36652b1e564 279-282
+  s_d77eaa9f55bc12::t_b7cac3655d4a74 283-287
+tests/test_plugin_rime_context_mode.py
+  s_d77eaa9f55bc12::t_b7cac3655d4a74 4,8,65-69,71,78-81,89-90,107-110,112-117,120
+  s_d77eaa9f55bc12::t_eefbdc7e449db6 118-119
+  s_d77eaa9f55bc12::t_ca0de97dffc762 121-123
+  s_d77eaa9f55bc12::t_d384a856c5aada 124-127
+tests/test_plugin_rime.py
+  s_d77eaa9f55bc12::t_d428a723ce3ef8 4001-4004
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a2d875316e4eeb5b431ade0ea68569937d2205b",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
