@@ -1,0 +1,23 @@
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_5e9fd8f764259c::t_f53dec9d2d7177 26-27
+livekit-plugins/livekit-plugins-rime/README.md
+  s_5e9fd8f764259c::t_f53dec9d2d7177 28,90,240,282,545
+uv.lock
+  s_5e9fd8f764259c::t_6b128d9b5b3f91 3657-3658,5897,5906,5908
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a458da27031b322c850fb37d5bb3032ca88dac6f",
+  "prompts": {},
+  "sessions": {
+    "s_5e9fd8f764259c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a29f-44f7-7980-ac76-47bd667f9988",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
