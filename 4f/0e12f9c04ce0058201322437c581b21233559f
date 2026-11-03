@@ -1,0 +1,21 @@
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_d77eaa9f55bc12::t_ee53cca18d666a 23
+uv.lock
+  s_d77eaa9f55bc12::t_379556119d101d 3639
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f0e12f9c04ce0058201322437c581b21233559f",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
