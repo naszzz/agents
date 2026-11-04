@@ -1,0 +1,19 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_d77eaa9f55bc12::t_ed2ebd4ed7a432 284-285,287-288
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb7b6f4c8d903f413f77a143c37c47cfe8546281",
+  "prompts": {},
+  "sessions": {
+    "s_d77eaa9f55bc12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a19d12-83ff-7762-9ca2-a7dc1c94ea10",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
