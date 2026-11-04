@@ -1,0 +1,42 @@
+livekit-plugins/livekit-plugins-rime/README.md
+  s_b12995d23936bf::t_f18191021075f6 471-476,533,536-540
+tests/test_plugin_rime.py
+  s_b12995d23936bf::t_cbc08091c31ccc 3994-3995,4013-4027,4039
+  s_b12995d23936bf::t_b3b59c39c141a8 47,4056
+  s_b12995d23936bf::t_21d8a962e08157 4033-4036,4060-4062,4133-4135
+  s_b12995d23936bf::t_e1818ee6828adf 4055
+  s_b12995d23936bf::t_c1cd5f554c9d1b 3986-3989,4009-4011,4032,4046,4058-4059,4063,4091-4092,4097,4131-4132,4136,4158-4159,4164-4168
+  s_b12995d23936bf::t_edf48f127f3360 4012,4098
+  s_b12995d23936bf::t_1116680cfc0e44 3990-3993
+  s_b12995d23936bf::t_03b7bd23ca171f 3996-3998,4006-4008
+  s_b12995d23936bf::t_6facd8ee52c209 4028-4031
+  s_b12995d23936bf::t_a9a4908e885edf 4037-4038
+  s_b12995d23936bf::t_4d32be3a89e779 4040-4045
+  s_b12995d23936bf::t_390a8ea474f4c6 4047-4049,4052-4054
+  s_b12995d23936bf::t_923e331e922b9c 4057
+  s_b12995d23936bf::t_47a492c02b17f3 4064-4066
+  s_b12995d23936bf::t_036b27cfd6a6f6 4093-4096
+  s_b12995d23936bf::t_925f76fa4a96b2 3999-4005,4050-4051,4067-4069,4073-4074,4079-4081,4084,4087
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/_history.py
+  s_b12995d23936bf::t_f18191021075f6 21-23,52-54,57,76,498-502
+  s_b12995d23936bf::t_90e68815fe1c6e 55-56
+  s_b12995d23936bf::t_31979fa4d683a4 503
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_b12995d23936bf::t_f18191021075f6 45,670-681
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd7f3e640b7088875d044211e02146390351af15",
+  "prompts": {},
+  "sessions": {
+    "s_b12995d23936bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a4a7-c9a5-7a60-9ee1-9f9a25b963a1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
