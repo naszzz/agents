@@ -1,0 +1,25 @@
+livekit-plugins/livekit-plugins-rime/livekit/plugins/rime/realtime/realtime_model.py
+  s_a715b463c91d27::t_4a58602376a534 279
+livekit-plugins/livekit-plugins-rime/pyproject.toml
+  s_a715b463c91d27::t_3fa1bef9b5f9c8 26
+livekit-plugins/livekit-plugins-rime/README.md
+  s_a715b463c91d27::t_3fa1bef9b5f9c8 240,609,611-612,625-627
+uv.lock
+  s_a715b463c91d27::t_f8f3363ccab630 3690,5930,5939,5941
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "96e35f8c5f88317a3fb6b4cb8a0e487134e60338",
+  "prompts": {},
+  "sessions": {
+    "s_a715b463c91d27": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d09d-c242-71d2-9476-127759cd2ad7",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "naszzz <naszagorov@gmail.com>"
+    }
+  }
+}
